@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Colors as C, FontSize, Radius } from "../styles/tokens";
-import { Card, CardTitle, Avatar, StatusDot, Divider, Button } from "../components/ui";
-import type { StudentStatus } from "../types";
+import { Card, CardTitle, Avatar, Divider, Button } from "../components/ui";
 import api from '../services/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -13,16 +12,6 @@ type RealStudent = {
 };
 
 type AllStudent = RealStudent & { assigned: boolean };
-
-const STATUS_FILTERS = ["All", "Online", "Idle", "Request", "Urgent"] as const;
-type StatusFilter = typeof STATUS_FILTERS[number];
-
-const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
-  online:  { bg: C.tealLight,   color: C.teal   },
-  idle:    { bg: C.gray,        color: C.text3  },
-  request: { bg: C.amberLight,  color: C.amber  },
-  urgent:  { bg: C.redLight,    color: C.red    },
-};
 
 const AVATAR_PALETTE = [
   { bg: C.tealLight,   color: C.teal   },
@@ -56,7 +45,6 @@ const Students: React.FC = () => {
   const [loadingAll, setLoadingAll] = useState(true);
 
   // Class Roster filter/search state
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [searchSystem, setSearchSystem] = useState("");
   const [searchRoster, setSearchRoster] = useState("");
 
@@ -132,27 +120,16 @@ const Students: React.FC = () => {
         id: s.id,
         name: name,
         username: s.username,
-        status: "idle",
         bg: av.bg,
         color: av.color,
     };
   });
 
-  // Filter My Students (Roster)
-  const filteredRoster = formattedRoster.filter(s => {
-    const matchStatus = statusFilter === "All" || s.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchSearch = s.name.toLowerCase().includes(searchRoster.toLowerCase()) || 
-                        s.username.toLowerCase().includes(searchRoster.toLowerCase());
-    return matchStatus && matchSearch;
-  });
-
-  const counts: Record<StatusFilter, number> = {
-    All:     formattedRoster.length,
-    Online:  formattedRoster.filter(s => s.status === "online").length,
-    Idle:    formattedRoster.filter(s => s.status === "idle").length,
-    Request: formattedRoster.filter(s => s.status === "request").length,
-    Urgent:  formattedRoster.filter(s => s.status === "urgent").length,
-  };
+  // Filter My Students (Roster) by search only
+  const filteredRoster = formattedRoster.filter(s =>
+    s.name.toLowerCase().includes(searchRoster.toLowerCase()) ||
+    s.username.toLowerCase().includes(searchRoster.toLowerCase())
+  );
 
   // Filter All System Students (Add Students List)
   const filteredSystem = allStudents.filter(s => {
@@ -257,28 +234,6 @@ const Students: React.FC = () => {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-          {STATUS_FILTERS.map(f => {
-            const active = statusFilter === f;
-            return (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                style={{
-                  padding: "4px 14px", borderRadius: Radius.full, cursor: "pointer",
-                  border: `1px solid ${active ? C.teal : C.gray2}`,
-                  background: active ? C.teal : "transparent",
-                  color: active ? C.white : C.text2,
-                  fontSize: FontSize.sm, fontWeight: active ? 600 : 400,
-                  fontFamily: "inherit", transition: "all 0.15s",
-                }}
-              >
-                {f} {counts[f]}
-              </button>
-            );
-          })}
-        </div>
-
         <input
           placeholder="Search your roster by name or username..."
           value={searchRoster}
@@ -298,7 +253,6 @@ const Students: React.FC = () => {
           gap: 12,
         }}>
           {filteredRoster.map(s => {
-            const badge = STATUS_BADGE[s.status] ?? STATUS_BADGE.idle;
             return (
               <div key={s.id} style={{
                 background: C.gray, borderRadius: Radius.md,
@@ -310,12 +264,6 @@ const Students: React.FC = () => {
                     <div style={{ fontSize: FontSize.base, fontWeight: 500, color: C.text }}>
                       {s.name}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                      <StatusDot status={s.status as StudentStatus} />
-                      <span style={{ fontSize: FontSize.xs, fontWeight: 600, color: badge.color }}>
-                        {s.status}
-                      </span>
-                    </div>
                   </div>
                 </div>
 
@@ -324,7 +272,6 @@ const Students: React.FC = () => {
                 <div style={{ fontSize: FontSize.sm, color: C.text3 }}>@{s.username}</div>
 
                 <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
-                  <Button variant="outline" size="sm" style={{ flex: 1 }}>Edit</Button>
                   <Button 
                     variant="outline" 
                     size="sm" 

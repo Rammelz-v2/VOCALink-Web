@@ -14,10 +14,9 @@ const PAGE_TITLES: Record<NavPage, { title: string; subtitle: string }> = {
 
 interface TopbarProps {
   page: NavPage;
-  onlineCount?: number;
 }
 
-const Topbar: React.FC<TopbarProps> = ({ page, onlineCount = 0 }) => {
+const Topbar: React.FC<TopbarProps> = ({ page }) => {
   const { title, subtitle } = PAGE_TITLES[page];
 
   return (
@@ -41,24 +40,6 @@ const Topbar: React.FC<TopbarProps> = ({ page, onlineCount = 0 }) => {
         <div style={{ fontSize: FontSize.xs, color: C.text3, marginTop: 2 }}>
           {subtitle}
         </div>
-      </div>
-
-      {/* Online status pill */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 7,
-        background: onlineCount > 0 ? "rgba(34,197,94,0.08)" : C.gray,
-        border: `1px solid ${onlineCount > 0 ? "rgba(34,197,94,0.2)" : C.gray2}`,
-        borderRadius: 999,
-        padding: "5px 12px",
-      }}>
-        <div style={{
-          width: 7, height: 7, borderRadius: "50%",
-          background: onlineCount > 0 ? "#22C55E" : C.gray3,
-          boxShadow: onlineCount > 0 ? "0 0 0 3px rgba(34,197,94,0.25)" : "none",
-        }} />
-        <span style={{ fontSize: FontSize.xs, fontWeight: 600, color: onlineCount > 0 ? "#15803D" : C.text3 }}>
-          {onlineCount} student{onlineCount !== 1 ? "s" : ""} online
-        </span>
       </div>
 
       {/* Notification bell */}

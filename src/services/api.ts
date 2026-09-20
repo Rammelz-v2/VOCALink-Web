@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://vocalink-fastapi.onrender.com/api',
+    baseURL: 'https://vocalink-fastapi-7gxl.onrender.com/api',
     headers: {
         'Content-Type': 'application/json',
     },

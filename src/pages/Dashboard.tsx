@@ -140,9 +140,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
     fetchStudents();
   }, []);
 
-  const online   = students.filter(s => s.status === "online").length;
-  const requests = students.filter(s => s.status === "request" || s.status === "urgent").length;
-  const idle     = students.filter(s => s.status === "idle").length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -188,25 +185,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
           bg="linear-gradient(135deg, #F0F9FF, #E0F2FE)"
           iconBg="linear-gradient(135deg, #1AADDC, #0E8DB8)"
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
-        />
-        <StatCard
-          value={online} label="Online Now"
-          bg="linear-gradient(135deg, #F0FDF4, #DCFCE7)"
-          iconBg="linear-gradient(135deg, #22C55E, #16A34A)"
-          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
-          trend="↑ Live session"
-        />
-        <StatCard
-          value={requests} label="Requests"
-          bg="linear-gradient(135deg, #FFFBEB, #FEF3C7)"
-          iconBg="linear-gradient(135deg, #F59E0B, #D97706)"
-          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>}
-        />
-        <StatCard
-          value={idle} label="Idle"
-          bg="linear-gradient(135deg, #F8FAFC, #F1F5F9)"
-          iconBg="linear-gradient(135deg, #64748B, #475569)"
-          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
         />
       </div>
 
@@ -272,24 +250,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
               >
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   <Avatar name={s.name} bg={s.bg} color={s.color} size={40} />
-                  <div style={{
-                    position: "absolute", bottom: 0, right: 0,
-                    width: 11, height: 11, borderRadius: "50%",
-                    background: s.status === "online" ? "#22C55E" : s.status === "urgent" ? C.redDark : C.gray3,
-                    border: `2px solid ${C.white}`,
-                  }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: FontSize.base, fontWeight: 600, color: C.text }}>{s.name}</div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                  <div style={{
-                    fontSize: FontSize.xs, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
-                    background: s.status === "online" ? "#DCFCE7" : s.status === "urgent" ? C.redLight : C.gray,
-                    color: s.status === "online" ? "#15803D" : s.status === "urgent" ? C.redDark : C.text3,
-                  }}>
-                    {s.status}
-                  </div>
                 </div>
               </div>
             ))}
