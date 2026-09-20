@@ -74,7 +74,7 @@ const DashboardLayout: React.FC = () => {
         teacherPhoto={teacherPhoto}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <Topbar page={active} onlineCount={onlineCount} />
+        <Topbar page={active}/>
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 20, background: "#F0F5F9" }}>
           {renderPage()}
         </main>
