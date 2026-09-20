@@ -24,7 +24,6 @@ const DashboardLayout: React.FC = () => {
   const [teacherName,     setTeacherName]     = useState("");
   const [teacherInitials, setTeacherInitials] = useState("");
   const [teacherPhoto,    setTeacherPhoto]    = useState<string | null>(null);
-  const [onlineCount,     setOnlineCount]     = useState(0);
 
   useEffect(() => {
     api.get("/users/me/").then(res => {
@@ -33,17 +32,6 @@ const DashboardLayout: React.FC = () => {
       setTeacherName(name);
       setTeacherInitials(name.substring(0, 2).toUpperCase());
     }).catch(() => {});
-
-    // Poll online count every 30s
-    const pollOnline = () => {
-      api.get("/teacher/students/").then(res => {
-        const students = Array.isArray(res.data) ? res.data : [];
-        setOnlineCount(students.filter((s: any) => s.is_online).length);
-      }).catch(() => {});
-    };
-    pollOnline();
-    const interval = setInterval(pollOnline, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const renderPage = () => {
@@ -74,7 +62,7 @@ const DashboardLayout: React.FC = () => {
         teacherPhoto={teacherPhoto}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <Topbar page={active}/>
+        <Topbar page={active} />
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 20, background: "#F0F5F9" }}>
           {renderPage()}
         </main>
