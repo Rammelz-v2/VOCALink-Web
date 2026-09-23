@@ -3,6 +3,7 @@ import { VIEW_HEIGHT, CSS, D } from "../components/broadcast/theme";
 import { useBroadcastSession } from "../hooks/useBroadcastSession";
 import Stage from "../components/broadcast/Stage";
 import MessagesPanel from "../components/broadcast/MessagesPanel";
+import RequestsPanel from "../components/broadcast/RequestsPanel";
 import ControlBar from "../components/broadcast/ControlBar";
 
 const Broadcast: React.FC = () => {
@@ -47,6 +48,15 @@ const Broadcast: React.FC = () => {
             sessionActive={bc.sessionActive}
           />
         )}
+
+        {bc.requestsPanelOpen && (
+          <RequestsPanel
+            onClose={() => bc.setRequestsPanelOpen(false)}
+            requests={bc.activeRequests}
+            onAcknowledge={bc.acknowledgeRequest}
+            onResolve={bc.resolveRequest}
+          />
+        )}
       </div>
 
       <ControlBar
@@ -61,6 +71,9 @@ const Broadcast: React.FC = () => {
         onToggleSession={bc.toggleSession}
         panelOpen={bc.panelOpen}
         onTogglePanel={() => bc.setPanelOpen(o => !o)}
+        requestsPanelOpen={bc.requestsPanelOpen}
+        onToggleRequestsPanel={() => bc.setRequestsPanelOpen(o => !o)}
+        requestCount={bc.activeRequests.length}
       />
     </div>
   );

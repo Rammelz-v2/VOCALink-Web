@@ -16,12 +16,16 @@ interface ControlBarProps {
   onToggleSession: () => void;
   panelOpen: boolean;
   onTogglePanel: () => void;
+  requestsPanelOpen: boolean;
+  onToggleRequestsPanel: () => void;
+  requestCount: number;
 }
 
 /** Bottom bar: session code (left) · mic + start/end (center) · panel toggle (right). */
 const ControlBar: React.FC<ControlBarProps> = ({
   sessionActive, sessionCode, recording, micOff, showHint, onDismissHint,
   onToggleMic, togglingSession, onToggleSession, panelOpen, onTogglePanel,
+  requestsPanelOpen, onToggleRequestsPanel, requestCount,
 }) => (
   <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, paddingTop: 12 }}>
 
@@ -94,7 +98,35 @@ const ControlBar: React.FC<ControlBarProps> = ({
       )}
     </div>
 
-    <div style={{ display: "flex", justifyContent: "flex-end", paddingRight: 8 }}>
+    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, paddingRight: 8 }}>
+      <button
+        className="bc-btn"
+        onClick={onToggleRequestsPanel}
+        aria-label="Student requests"
+        aria-pressed={requestsPanelOpen}
+        title="Student requests"
+        style={{
+          ...btnBase, width: 48, height: 48, borderRadius: "50%", position: "relative",
+          background: requestsPanelOpen ? D.panelOn : D.surface,
+        }}
+      >
+        <Glyph
+          d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+          size={22}
+          color={requestsPanelOpen ? D.panelFg : D.text}
+        />
+        {requestCount > 0 && (
+          <span style={{
+            position: "absolute", top: -2, right: -2, minWidth: 18, height: 18,
+            borderRadius: 9, background: D.end, color: "#fff",
+            fontSize: 11, fontWeight: 700, lineHeight: "18px", textAlign: "center",
+            padding: "0 4px",
+          }}>
+            {requestCount}
+          </span>
+        )}
+      </button>
+
       <button
         className="bc-btn"
         onClick={onTogglePanel}

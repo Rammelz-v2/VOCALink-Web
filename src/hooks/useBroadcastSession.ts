@@ -12,12 +12,23 @@ export interface StudentActivity {
   text:         string;
 }
 
+export interface CommRequest {
+  id:           string;
+  student_id:   number;
+  student_name: string;
+  request_type: string;   // "medication" | "bathroom" | "assistance"
+  status:       string;   // "pending" | "acknowledged" | "resolved"
+  note:         string | null;
+  created_at:   string;
+}
 /**
  * All Broadcast state, effects and handlers: session lifecycle, speech
  * recognition, student-activity polling, fullscreen, and the manual
  * message composer. The page component just wires this to JSX.
  */
 export function useBroadcastSession() {
+  const [activeRequests, setActiveRequests] = useState<CommRequest[]>([]);
+  const lastRequestIdRef = useRef(0);
   const [recording,  setRecording]  = useState(false);
   const [lastText,   setLastText]   = useState("");
   const [error,      setError]      = useState("");
@@ -31,6 +42,7 @@ export function useBroadcastSession() {
   const [manualText,      setManualText]      = useState("");
 
   const [panelOpen,     setPanelOpen]     = useState(false);
+  const [requestsPanelOpen, setRequestsPanelOpen] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(false);
   const [isFullscreen,  setIsFullscreen]  = useState(false);
 
@@ -50,6 +62,42 @@ export function useBroadcastSession() {
       setSessionCode(res.data.session_code || null);
     }).catch(() => {});
   }, []);
+
+// ── add as its own useEffect, right after the studentActivity polling effect ─
+useEffect(() => {
+  if (!sessionActive) {
+    setActiveRequests([]);
+    lastRequestIdRef.current = 0;
+    return;
+  }
+  const pollRequests = () => {
+    api.get(`/requests/active/?since=0`) // always full active list, not incremental
+      .then(res => {
+        setActiveRequests(res.data);
+      }).catch(() => {});
+  };
+  pollRequests();
+  const iv = setInterval(pollRequests, 3000);
+  return () => clearInterval(iv);
+}, [sessionActive]);
+
+const acknowledgeRequest = async (id: string) => {
+  try {
+    await api.patch(`/requests/${id}/`, { status: "acknowledged" });
+    setActiveRequests(prev => prev.map(r => r.id === id ? { ...r, status: "acknowledged" } : r));
+  } catch {
+    setError("Couldn't update the request.");
+  }
+};
+
+const resolveRequest = async (id: string) => {
+  try {
+    await api.patch(`/requests/${id}/`, { status: "resolved" });
+    setActiveRequests(prev => prev.filter(r => r.id !== id));
+  } catch {
+    setError("Couldn't update the request.");
+  }
+};
 
   useEffect(() => {
     if (!sessionActive) {
@@ -221,6 +269,8 @@ export function useBroadcastSession() {
     sessionActive, sessionCode, togglingSession,
     sentLines, studentActivity, manualText, setManualText,
     panelOpen, setPanelOpen, hintDismissed, setHintDismissed, isFullscreen,
+    requestsPanelOpen, setRequestsPanelOpen,
+    activeRequests, acknowledgeRequest, resolveRequest,
     micOff, showHint,
     // refs (attach directly to DOM nodes)
     activityRef, chatRef, containerRef,
