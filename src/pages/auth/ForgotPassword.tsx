@@ -15,7 +15,7 @@ export default function ForgotPassword() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("https://vocalink-fastapi.onrender.com/api/auth/forgot-password/", {
+      const res = await fetch("https://vocalink-fastapi-7gxl.onrender.com/api/auth/forgot-password/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

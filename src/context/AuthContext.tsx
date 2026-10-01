@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (credentials: any) => {
     try {
-      const response = await fetch('https://vocalink-fastapi.onrender.com/api/auth/register/', {
+      const response = await fetch('https://vocalink-fastapi-7gxl.onrender.com/api/auth/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async ({ identifier, password, remember }: any) => {
     try {
   
-      const response = await fetch('https://vocalink-fastapi.onrender.com/api/auth/login/', {
+      const response = await fetch('https://vocalink-fastapi-7gxl.onrender.com/api/auth/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
