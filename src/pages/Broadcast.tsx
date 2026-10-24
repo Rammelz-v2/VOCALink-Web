@@ -5,6 +5,8 @@ import Stage from "../components/broadcast/Stage";
 import MessagesPanel from "../components/broadcast/MessagesPanel";
 import RequestsPanel from "../components/broadcast/RequestsPanel";
 import ControlBar from "../components/broadcast/ControlBar";
+import EmergencyAlert from "../components/broadcast/EmergencyAlert";
+import RequestToastStack from "../components/broadcast/RequestToastStack";
 
 const Broadcast: React.FC = () => {
   const bc = useBroadcastSession();
@@ -75,6 +77,21 @@ const Broadcast: React.FC = () => {
         onToggleRequestsPanel={() => bc.setRequestsPanelOpen(o => !o)}
         requestCount={bc.activeRequests.length}
       />
+
+      <RequestToastStack
+        toasts={bc.requestToasts}
+        onAcknowledge={bc.acknowledgeRequest}
+        onDismiss={bc.dismissToast}
+      />
+
+      {bc.showEmergencyAlert &&
+       bc.activeRequests.some(r => r.request_type === "emergency" && r.status === "pending") && (
+        <EmergencyAlert
+          requests={bc.activeRequests.filter(r => r.request_type === "emergency" && r.status === "pending")}
+          onAcknowledge={bc.acknowledgeRequest}
+          onDismiss={() => bc.setShowEmergencyAlert(false)}
+        />
+      )}
     </div>
   );
 };

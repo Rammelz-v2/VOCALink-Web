@@ -45,6 +45,11 @@ export function useBroadcastSession() {
   const [requestsPanelOpen, setRequestsPanelOpen] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(false);
   const [isFullscreen,  setIsFullscreen]  = useState(false);
+  const [showEmergencyAlert, setShowEmergencyAlert] = useState(false);
+  const seenEmergencyIdsRef = useRef<Set<string>>(new Set());
+
+  const [requestToasts, setRequestToasts] = useState<CommRequest[]>([]);
+  const seenRequestIdsRef = useRef<Set<string>>(new Set());
 
   const lastIconIdRef    = useRef(0);
   const activityRef      = useRef<HTMLDivElement>(null);
@@ -73,7 +78,28 @@ useEffect(() => {
   const pollRequests = () => {
     api.get(`/requests/active/?since=0`) // always full active list, not incremental
       .then(res => {
-        setActiveRequests(res.data);
+        const requests: CommRequest[] = res.data;
+        setActiveRequests(requests);
+
+        const newEmergencies = requests.filter(
+          r => r.request_type === "emergency" &&
+               r.status === "pending" &&
+               !seenEmergencyIdsRef.current.has(r.id)
+        );
+        if (newEmergencies.length > 0) {
+          newEmergencies.forEach(r => seenEmergencyIdsRef.current.add(r.id));
+          setShowEmergencyAlert(true);
+        }
+
+        const newNonEmergency = requests.filter(
+          r => r.request_type !== "emergency" &&
+               r.status === "pending" &&
+               !seenRequestIdsRef.current.has(r.id)
+        );
+        if (newNonEmergency.length > 0) {
+          newNonEmergency.forEach(r => seenRequestIdsRef.current.add(r.id));
+          setRequestToasts(prev => [...prev, ...newNonEmergency]);
+        }
       }).catch(() => {});
   };
   pollRequests();
@@ -88,6 +114,10 @@ const acknowledgeRequest = async (id: string) => {
   } catch {
     setError("Couldn't update the request.");
   }
+};
+
+const dismissToast = (id: string) => {
+  setRequestToasts(prev => prev.filter(t => t.id !== id));
 };
 
 const resolveRequest = async (id: string) => {
@@ -271,6 +301,8 @@ const resolveRequest = async (id: string) => {
     panelOpen, setPanelOpen, hintDismissed, setHintDismissed, isFullscreen,
     requestsPanelOpen, setRequestsPanelOpen,
     activeRequests, acknowledgeRequest, resolveRequest,
+    showEmergencyAlert, setShowEmergencyAlert,
+    requestToasts, dismissToast,
     micOff, showHint,
     // refs (attach directly to DOM nodes)
     activityRef, chatRef, containerRef,
