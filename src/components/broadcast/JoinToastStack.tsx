@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import type { SessionParticipant } from "../../hooks/useBroadcastSession";
+import type { SessionParticipant } from "../../types";
 import { colorFor } from "./theme";
 
 const AUTO_DISMISS_MS = 6000;

@@ -3,6 +3,7 @@ import { Radius, Shadow, FontSize } from "../../styles/tokens";
 import { Button } from "../ui";
 
 interface WelcomeBannerProps {
+  loading?: boolean;
   today: string;
   teacherName: string;
   roomSection?: string;
@@ -11,7 +12,7 @@ interface WelcomeBannerProps {
 }
 
 const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
-  today, teacherName, roomSection, department, onStartBroadcast,
+  loading, today, teacherName, roomSection, department, onStartBroadcast,
 }) => (
   <div style={{
     borderRadius: Radius.xl,
@@ -27,11 +28,25 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
       <div style={{ fontSize: FontSize.xs, color: "rgba(255,255,255,0.5)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
         {today}
       </div>
-      <div style={{ fontSize: FontSize.xl, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.5px" }}>
-        Good morning, {teacherName} 👋
+      <div style={{ fontSize: FontSize.xl, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.5px", minHeight: 32 }}>
+        {loading ? (
+          <span style={{
+            display: "inline-block", width: 200, height: 28, borderRadius: 6,
+            background: "rgba(255,255,255,0.15)", verticalAlign: "middle",
+          }} />
+        ) : (
+          `Good morning, ${teacherName} 👋`
+        )}
       </div>
-      <div style={{ fontSize: FontSize.base, color: "rgba(255,255,255,0.55)", marginTop: 6 }}>
-        {roomSection || "Your classroom"} · {department || "SNED"}
+      <div style={{ fontSize: FontSize.base, color: "rgba(255,255,255,0.55)", marginTop: 6, minHeight: 22 }}>
+        {loading ? (
+          <span style={{
+            display: "inline-block", width: 120, height: 14, borderRadius: 4,
+            background: "rgba(255,255,255,0.1)", verticalAlign: "middle",
+          }} />
+        ) : (
+          `${roomSection || "Your classroom"} · ${department || "SNED"}`
+        )}
       </div>
     </div>
 

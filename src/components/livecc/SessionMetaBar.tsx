@@ -18,7 +18,10 @@ const SessionMetaBar: React.FC<{ sessionLog: SessionLog }> = ({ sessionLog }) =>
       Code: <span style={{ color: sessionLog.is_active ? "#15803D" : C.text2, fontFamily: "monospace", fontSize: 15 }}>{sessionLog.session_code}</span>
     </span>
     <span style={{ color: C.text3 }}>
-      Started: {sessionLog.started_at?.slice(0, 16).replace("T", " ")}
+      Started: {sessionLog.started_at
+        ? new Date(sessionLog.started_at.endsWith("Z") ? sessionLog.started_at : sessionLog.started_at + "Z")
+            .toLocaleString([], { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+        : "—"}
     </span>
     <span style={{ color: C.text3, marginLeft: "auto" }}>
       {sessionLog.entries.length} {sessionLog.entries.length === 1 ? "entry" : "entries"}

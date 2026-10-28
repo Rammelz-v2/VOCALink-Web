@@ -1,15 +1,16 @@
 import React from "react";
 import { Colors as C, FontSize, Radius, Shadow } from "../../styles/tokens";
-import type { DashboardSession } from "../../hooks/useDashboardData";
+import type { SessionMeta } from "../../types";
 
 interface RecentSessionsCardProps {
-  sessions: DashboardSession[];
+  sessions: SessionMeta[];
   onViewLog: () => void;
 }
 
 function fmtDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    return new Date(iso.endsWith("Z") ? iso : iso + "Z")
+      .toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
   } catch {
     return iso.slice(0, 10);
   }

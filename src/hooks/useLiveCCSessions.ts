@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "../context/SessionContext";
 import api from "../services/api";
+import type { SessionMeta } from "../types";
 
-export interface SessionMeta {
-  id: number;
-  session_code: string;
-  started_at: string;
-  is_active: boolean;
-}
+export type { SessionMeta };
 
 export interface LogEntry {
   id: string;
@@ -20,21 +17,28 @@ export interface LogEntry {
 }
 
 export interface SessionLog {
-  session_id: number;
+  session_id:   number;
   session_code: string;
-  started_at: string;
-  is_active: boolean;
-  entries: LogEntry[];
+  started_at:   string;
+  ended_at:     string | null;
+  is_active:    boolean;
+  ended_reason: "manual" | "inactivity" | null;
+  entries:      LogEntry[];
 }
 
+// Backend stores UTC without 'Z'; append it so JS parses as UTC → local time.
+const utc = (iso: string) =>
+  iso.endsWith("Z") || /[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z";
+
 const fmt = (iso: string) =>
-  new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  new Date(utc(iso)).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 export function useLiveCCSessions() {
-  const [sessions,        setSessions]        = useState<SessionMeta[]>([]);
+  const { sessions, sessionsLoading } = useSession();
+
   const [selectedId,      setSelectedId]      = useState<number | null>(null);
   const [sessionLog,      setSessionLog]      = useState<SessionLog | null>(null);
-  const [loading,         setLoading]         = useState(true);
+  const [loading,         setLoading]         = useState(false);
   const [syntheticEvents, setSyntheticEvents] = useState<LogEntry[]>([]);
 
   const seenParticipantIdsRef    = useRef<Set<number>>(new Set());
@@ -42,17 +46,12 @@ export function useLiveCCSessions() {
   const startInjectedForRef      = useRef<number | null>(null);
   const endInjectedForRef        = useRef<number | null>(null);
 
-  const fetchSessions = async () => {
-    try {
-      const res = await api.get("/sessions/all/");
-      const list: SessionMeta[] = res.data || [];
-      setSessions(list);
-      if (list.length > 0 && selectedId === null) {
-        const active = list.find(s => s.is_active);
-        setSelectedId((active ?? list[0]).id);
-      }
-    } catch {}
-  };
+  // Auto-select the first/active session once sessions are loaded
+  useEffect(() => {
+    if (sessionsLoading || sessions.length === 0 || selectedId !== null) return;
+    const active = sessions.find(s => s.is_active);
+    setSelectedId((active ?? sessions[0]).id);
+  }, [sessionsLoading, sessions]);
 
   const fetchLog = async (id: number) => {
     try {
@@ -61,8 +60,6 @@ export function useLiveCCSessions() {
     } catch {}
     setLoading(false);
   };
-
-  useEffect(() => { fetchSessions(); }, []);
 
   useEffect(() => {
     if (selectedId === null) return;
@@ -82,7 +79,6 @@ export function useLiveCCSessions() {
     if (!sessionLog) return;
     const sid = sessionLog.session_id;
 
-    // Session started — inject once per selected session
     if (startInjectedForRef.current !== sid) {
       startInjectedForRef.current = sid;
       setSyntheticEvents(prev => [...prev, {
@@ -96,19 +92,24 @@ export function useLiveCCSessions() {
       }]);
     }
 
-    // Session ended — inject once when it goes inactive
     if (!sessionLog.is_active && endInjectedForRef.current !== sid) {
       endInjectedForRef.current = sid;
+      // Prefer the real ended_at; fall back to last entry + 500 ms; last resort: started_at + 500 ms
       const allKeys = sessionLog.entries.map(e => e.sort_key);
-      const lastKey = allKeys.length > 0 ? allKeys[allKeys.length - 1] : sessionLog.started_at;
-      const endKey  = new Date(new Date(lastKey).getTime() + 500).toISOString();
+      const fallback = allKeys.length > 0 ? allKeys[allKeys.length - 1] : sessionLog.started_at;
+      const endKey  = sessionLog.ended_at
+        ? utc(sessionLog.ended_at)
+        : new Date(new Date(utc(fallback)).getTime() + 500).toISOString();
+      const endText = sessionLog.ended_reason === "inactivity"
+        ? "Session ended due to inactivity (10 min idle)"
+        : "Session ended";
       setSyntheticEvents(prev => [...prev, {
         id:         `event-end-${sid}`,
         type:       "event",
         sort_key:   endKey,
         time:       fmt(endKey),
         speaker:    "System",
-        text:       "Session ended",
+        text:       endText,
         event_kind: "end",
       }]);
     }
@@ -183,10 +184,15 @@ export function useLiveCCSessions() {
     if (selectedId !== null) fetchLog(selectedId);
   };
 
+  // Normalise to UTC before comparing — backend keys have no 'Z', synthetic ones do.
   const mergedEntries: LogEntry[] = sessionLog
     ? [...sessionLog.entries, ...syntheticEvents]
-        .sort((a, b) => a.sort_key.localeCompare(b.sort_key))
+        .sort((a, b) => utc(a.sort_key).localeCompare(utc(b.sort_key)))
     : [];
 
-  return { sessions, selectedId, selectSession, sessionLog, loading, refresh, mergedEntries };
+  return {
+    sessions, selectedId, selectSession,
+    sessionLog, loading, sessionsLoading,
+    refresh, mergedEntries,
+  };
 }

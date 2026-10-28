@@ -5,6 +5,7 @@ import { D, PATH, Glyph, btnBase } from "./theme";
 import MicHintTooltip from "./MicHintTooltip";
 
 interface ControlBarProps {
+  sessionLoading: boolean;
   sessionActive: boolean;
   sessionCode: string | null;
   recording: boolean;
@@ -26,7 +27,7 @@ interface ControlBarProps {
 
 /** Bottom bar: session code (left) · mic + start/end (center) · panel toggle (right). */
 const ControlBar: React.FC<ControlBarProps> = ({
-  sessionActive, sessionCode, recording, micOff, showHint, onDismissHint,
+  sessionLoading, sessionActive, sessionCode, recording, micOff, showHint, onDismissHint,
   onToggleMic, togglingSession, onToggleSession, panelOpen, onTogglePanel,
   requestsPanelOpen, onToggleRequestsPanel, requestCount,
   participantsPanelOpen, onToggleParticipantsPanel, participantCount,
@@ -39,7 +40,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
         background: sessionActive ? "#22C55E" : "#5F6368",
         boxShadow: sessionActive ? "0 0 0 3px rgba(34,197,94,0.25)" : "none",
       }} />
-      {sessionActive ? (
+      {sessionLoading ? null : sessionActive ? (
         <span title="Session code" style={{ fontFamily: "monospace", fontWeight: 600, letterSpacing: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {sessionCode}
         </span>
@@ -69,7 +70,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
         </button>
       </div>
 
-      {sessionActive ? (
+      {sessionLoading ? (
+        <button disabled style={{ ...btnBase, gap: 8, height: 48, padding: "0 22px", borderRadius: 24, background: D.surface, color: D.dim, fontSize: 14, fontWeight: 600, cursor: "not-allowed", opacity: 0.5 }}>
+          Loading…
+        </button>
+      ) : sessionActive ? (
         <button
           className="bc-btn"
           onClick={onToggleSession}

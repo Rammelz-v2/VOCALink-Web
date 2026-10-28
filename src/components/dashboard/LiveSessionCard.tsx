@@ -1,17 +1,25 @@
 import React, { useState } from "react";
 import { Colors as C, FontSize, Radius, Shadow } from "../../styles/tokens";
 import { colorFor } from "../broadcast/theme";
-import type { DashboardParticipant } from "../../hooks/useDashboardData";
+import type { SessionParticipant } from "../../types";
 
 interface LiveSessionCardProps {
+  loading: boolean;
   sessionActive: boolean;
   sessionCode: string | null;
-  participants: DashboardParticipant[];
+  participants: SessionParticipant[];
   onGoToBroadcast: () => void;
 }
 
+const shimmer: React.CSSProperties = {
+  background: "linear-gradient(90deg, #E2E8F0 25%, #EEF2FF 50%, #E2E8F0 75%)",
+  backgroundSize: "200% 100%",
+  animation: "shimmer 1.4s infinite",
+  borderRadius: 8,
+};
+
 const LiveSessionCard: React.FC<LiveSessionCardProps> = ({
-  sessionActive, sessionCode, participants, onGoToBroadcast,
+  loading, sessionActive, sessionCode, participants, onGoToBroadcast,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -36,15 +44,19 @@ const LiveSessionCard: React.FC<LiveSessionCardProps> = ({
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
-            width: 8, height: 8, borderRadius: "50%",
-            background: sessionActive ? "#22C55E" : "#94A3B8",
-            boxShadow: sessionActive ? "0 0 0 3px rgba(34,197,94,0.2)" : "none",
+            width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+            background: loading ? "#CBD5E1" : sessionActive ? "#22C55E" : "#94A3B8",
+            boxShadow: (!loading && sessionActive) ? "0 0 0 3px rgba(34,197,94,0.2)" : "none",
           }} />
-          <span style={{ fontSize: FontSize.md, fontWeight: 700, color: C.text }}>
-            {sessionActive ? "Session Live" : "No Active Session"}
-          </span>
+          {loading ? (
+            <div style={{ ...shimmer, width: 110, height: 16 }} />
+          ) : (
+            <span style={{ fontSize: FontSize.md, fontWeight: 700, color: C.text }}>
+              {sessionActive ? "Session Live" : "No Active Session"}
+            </span>
+          )}
         </div>
-        {sessionActive && (
+        {!loading && sessionActive && (
           <span style={{
             fontSize: FontSize.xs, fontWeight: 600, color: "#16A34A",
             background: "#DCFCE7", padding: "3px 10px", borderRadius: 999,
@@ -55,7 +67,18 @@ const LiveSessionCard: React.FC<LiveSessionCardProps> = ({
       </div>
 
       <div style={{ padding: "24px 20px" }}>
-        {sessionActive && sessionCode ? (
+        {loading ? (
+          /* Skeleton content */
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ ...shimmer, width: "70%", height: 20 }} />
+            <div style={{ ...shimmer, width: "100%", height: 72, borderRadius: 12 }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ ...shimmer, width: 80, height: 32, borderRadius: 999 }} />
+              <div style={{ ...shimmer, width: 80, height: 32, borderRadius: 999 }} />
+            </div>
+            <div style={{ ...shimmer, width: "100%", height: 40, borderRadius: 8 }} />
+          </div>
+        ) : sessionActive && sessionCode ? (
           <>
             {/* Session code display */}
             <div style={{ marginBottom: 24 }}>

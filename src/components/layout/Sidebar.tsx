@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Colors as C, FontSize, Radius } from "../../styles/tokens";
 import {} from "../ui";
 import Icon from "../ui/Icon";
@@ -6,7 +6,6 @@ import type { NavPage } from "../../types";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
 
 interface NavItem {
   id: NavPage;
@@ -27,6 +26,7 @@ interface SidebarProps {
   teacherName: string;
   teacherInitials: string;
   teacherPhoto: string | null;
+  profileLoading?: boolean;
 }
 
 const HamburgerIcon: React.FC<{ color?: string }> = ({ color = "rgba(255,255,255,0.6)" }) => (
@@ -88,26 +88,16 @@ const NavBtn: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = ({
   active, setActive,
-  teacherName, teacherInitials, teacherPhoto,
+  teacherName, teacherInitials, teacherPhoto, profileLoading,
 }) => {
   const { logout } = useAuth();
   const { isDark, toggle: toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [settingsHovered,  setSettingsHovered]  = React.useState(false);
-  const [logoutHovered,    setLogoutHovered]    = React.useState(false);
-  const [themeHovered,     setThemeHovered]     = React.useState(false);
-  const [collapsed,        setCollapsed]        = React.useState(false);
-  const [toggleHovered,    setToggleHovered]    = React.useState(false);
-  const [localName,        setLocalName]        = useState("");
-  const [localInitials,    setLocalInitials]    = useState("");
-
-  useEffect(() => {
-    api.get("users/me/").then(res => {
-      const name = res.data.display_name || res.data.username || "User";
-      setLocalName(name);
-      setLocalInitials(name.substring(0, 2).toUpperCase());
-    }).catch(() => {});
-  }, []);
+  const [settingsHovered, setSettingsHovered] = React.useState(false);
+  const [logoutHovered,   setLogoutHovered]   = React.useState(false);
+  const [themeHovered,    setThemeHovered]    = React.useState(false);
+  const [collapsed,       setCollapsed]       = React.useState(false);
+  const [toggleHovered,   setToggleHovered]   = React.useState(false);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
@@ -339,14 +329,18 @@ const Sidebar: React.FC<SidebarProps> = ({
             }}>
               {teacherPhoto
                 ? <img src={teacherPhoto} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{teacherInitials || localInitials || "T"}</span>
+                : <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{teacherInitials || "T"}</span>
               }
             </div>
-            <div style={{ overflow: "hidden" }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {teacherName || localName || "Teacher"}
-              </div>
-              <div style={{ fontSize: FontSize.xs, color: "rgba(255,255,255,0.35)" }}>SNED Teacher</div>
+            <div style={{ overflow: "hidden", flex: 1 }}>
+              {profileLoading ? (
+                <div style={{ height: 12, width: 80, borderRadius: 4, background: "rgba(255,255,255,0.12)" }} />
+              ) : (
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {teacherName || "Teacher"}
+                </div>
+              )}
+              <div style={{ fontSize: FontSize.xs, color: "rgba(255,255,255,0.35)", marginTop: 3 }}>SNED Teacher</div>
             </div>
           </div>
         ) : (
@@ -360,7 +354,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             }}>
               {teacherPhoto
                 ? <img src={teacherPhoto} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{teacherInitials || localInitials || "T"}</span>
+                : <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{teacherInitials || "T"}</span>
               }
             </div>
           </div>

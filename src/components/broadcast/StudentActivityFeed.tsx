@@ -43,7 +43,8 @@ const StudentActivityFeed: React.FC<StudentActivityFeedProps> = ({ activity, fee
                   {item.student_name}
                 </span>
                 <span style={{ fontSize: 12, color: D.dim }}>
-                  {item.time.slice(11, 16)}
+                  {new Date(item.time.endsWith("Z") ? item.time : item.time + "Z")
+                    .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
               <div style={{ fontSize: 30, fontWeight: 500, lineHeight: 1.3, wordBreak: "break-word" }}>
