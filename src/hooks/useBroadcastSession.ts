@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
+import { useSession } from "../context/SessionContext";
+import type { SessionParticipant } from "../types";
+
+export type { SessionParticipant };
 
 const SpeechRecognition: any =
   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -12,173 +16,93 @@ export interface StudentActivity {
   text:         string;
 }
 
-export interface SessionParticipant {
-  id:        number;
-  user_id:   number;
-  name:      string;
-  joined_at: string;
-}
-
 export interface CommRequest {
   id:           string;
   student_id:   number;
   student_name: string;
-  request_type: string;   // "medication" | "bathroom" | "assistance"
-  status:       string;   // "pending" | "acknowledged" | "resolved"
+  request_type: string;
+  status:       string;
   note:         string | null;
   created_at:   string;
 }
-/**
- * All Broadcast state, effects and handlers: session lifecycle, speech
- * recognition, student-activity polling, fullscreen, and the manual
- * message composer. The page component just wires this to JSX.
- */
+
 export function useBroadcastSession() {
-  const [activeRequests, setActiveRequests] = useState<CommRequest[]>([]);
-  const lastRequestIdRef = useRef(0);
-  const [recording,  setRecording]  = useState(false);
-  const [lastText,   setLastText]   = useState("");
-  const [error,      setError]      = useState("");
+  // Session state + participant toasts come from context so they:
+  //  • survive page navigation (no flash when returning to Broadcast)
+  //  • run participant polling on every page (global notifications)
+  const {
+    sessionLoading,
+    sessionActive,    setSessionActive,
+    sessionCode,      setSessionCode,
+    togglingSession,  setTogglingSession,
+    participants,
+    joinToasts,       leaveToasts,
+    dismissJoinToast, dismissLeaveToast,
+  } = useSession();
 
-  const [sessionActive,   setSessionActive]   = useState(false);
-  const [sessionCode,     setSessionCode]     = useState<string | null>(null);
-  const [togglingSession, setTogglingSession] = useState(false);
-
-  const [sentLines,       setSentLines]       = useState<string[]>([]);
-  const [studentActivity, setStudentActivity] = useState<StudentActivity[]>([]);
-  const [manualText,      setManualText]      = useState("");
-
-  const [panelOpen,     setPanelOpen]     = useState(false);
-  const [requestsPanelOpen, setRequestsPanelOpen] = useState(false);
-  const [hintDismissed, setHintDismissed] = useState(false);
-  const [isFullscreen,  setIsFullscreen]  = useState(false);
+  const [activeRequests,     setActiveRequests]     = useState<CommRequest[]>([]);
+  const [recording,          setRecording]          = useState(false);
+  const [lastText,           setLastText]           = useState("");
+  const [error,              setError]              = useState("");
+  const [sentLines,          setSentLines]          = useState<string[]>([]);
+  const [studentActivity,    setStudentActivity]    = useState<StudentActivity[]>([]);
+  const [manualText,         setManualText]         = useState("");
+  const [panelOpen,          setPanelOpen]          = useState(false);
+  const [requestsPanelOpen,  setRequestsPanelOpen]  = useState(false);
+  const [hintDismissed,      setHintDismissed]      = useState(false);
+  const [isFullscreen,       setIsFullscreen]       = useState(false);
   const [showEmergencyAlert, setShowEmergencyAlert] = useState(false);
-  const seenEmergencyIdsRef = useRef<Set<string>>(new Set());
-
-  const [requestToasts, setRequestToasts] = useState<CommRequest[]>([]);
-  const seenRequestIdsRef = useRef<Set<string>>(new Set());
-
-  const [participants,   setParticipants]   = useState<SessionParticipant[]>([]);
-  const [joinToasts,     setJoinToasts]     = useState<SessionParticipant[]>([]);
-  const [leaveToasts,    setLeaveToasts]    = useState<SessionParticipant[]>([]);
-  const seenParticipantIdsRef    = useRef<Set<number>>(new Set());
-  const activeParticipantsMapRef = useRef<Map<number, SessionParticipant>>(new Map());
+  const [requestToasts,      setRequestToasts]      = useState<CommRequest[]>([]);
   const [participantsPanelOpen, setParticipantsPanelOpen] = useState(false);
 
-  const lastIconIdRef    = useRef(0);
-  const activityRef      = useRef<HTMLDivElement>(null);
-  const chatRef          = useRef<HTMLDivElement>(null);
-  const containerRef     = useRef<HTMLDivElement>(null);
-  const stickRef         = useRef(true);
-  const isRecordingRef   = useRef(false);
-  const recognitionRef   = useRef<any>(null);
+  const seenEmergencyIdsRef = useRef<Set<string>>(new Set());
+  const seenRequestIdsRef   = useRef<Set<string>>(new Set());
+  const lastIconIdRef       = useRef(0);
+  const activityRef         = useRef<HTMLDivElement>(null);
+  const chatRef             = useRef<HTMLDivElement>(null);
+  const containerRef        = useRef<HTMLDivElement>(null);
+  const stickRef            = useRef(true);
+  const isRecordingRef      = useRef(false);
+  const recognitionRef      = useRef<any>(null);
+
+  // Keep a ref in sync so startRecording's closure always has the latest value.
   const sessionActiveRef = useRef(sessionActive);
-  useEffect(() => { sessionActiveRef.current = sessionActive; }, [sessionActive]);
-
   useEffect(() => {
-    api.get("/sessions/teacher").then(res => {
-      setSessionActive(res.data.active);
-      setSessionCode(res.data.session_code || null);
-    }).catch(() => {});
-  }, []);
+    sessionActiveRef.current = sessionActive;
+    // If the session was killed externally (inactivity), stop the mic.
+    if (!sessionActive && isRecordingRef.current) stopRecording();
+  }, [sessionActive]);
 
-// ── add as its own useEffect, right after the studentActivity polling effect ─
-useEffect(() => {
-  if (!sessionActive) {
-    setActiveRequests([]);
-    lastRequestIdRef.current = 0;
-    return;
-  }
-  const pollRequests = () => {
-    api.get(`/requests/active/?since=0`) // always full active list, not incremental
-      .then(res => {
-        const requests: CommRequest[] = res.data;
-        setActiveRequests(requests);
-
-        const newEmergencies = requests.filter(
-          r => r.request_type === "emergency" &&
-               r.status === "pending" &&
-               !seenEmergencyIdsRef.current.has(r.id)
-        );
-        if (newEmergencies.length > 0) {
-          newEmergencies.forEach(r => seenEmergencyIdsRef.current.add(r.id));
-          setShowEmergencyAlert(true);
-        }
-
-        const newNonEmergency = requests.filter(
-          r => r.request_type !== "emergency" &&
-               r.status === "pending" &&
-               !seenRequestIdsRef.current.has(r.id)
-        );
-        if (newNonEmergency.length > 0) {
-          newNonEmergency.forEach(r => seenRequestIdsRef.current.add(r.id));
-          setRequestToasts(prev => [...prev, ...newNonEmergency]);
-        }
-      }).catch(() => {});
-  };
-  pollRequests();
-  const iv = setInterval(pollRequests, 3000);
-  return () => clearInterval(iv);
-}, [sessionActive]);
-
-const acknowledgeRequest = async (id: string) => {
-  try {
-    await api.patch(`/requests/${id}/`, { status: "acknowledged" });
-    setActiveRequests(prev => prev.map(r => r.id === id ? { ...r, status: "acknowledged" } : r));
-  } catch {
-    setError("Couldn't update the request.");
-  }
-};
-
-const dismissToast = (id: string) => {
-  setRequestToasts(prev => prev.filter(t => t.id !== id));
-};
-
-const resolveRequest = async (id: string) => {
-  try {
-    await api.patch(`/requests/${id}/`, { status: "resolved" });
-    setActiveRequests(prev => prev.filter(r => r.id !== id));
-  } catch {
-    setError("Couldn't update the request.");
-  }
-};
-
-  // ── Participant polling ──────────────────────────────────────────────────
+  // ── Request polling ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!sessionActive) {
-      setParticipants([]);
-      setJoinToasts([]);
-      setLeaveToasts([]);
-      seenParticipantIdsRef.current.clear();
-      activeParticipantsMapRef.current.clear();
+      setActiveRequests([]);
       return;
     }
     const poll = () => {
-      api.get("/sessions/active/participants/")
+      api.get("/requests/active/?since=0")
         .then(res => {
-          const list: SessionParticipant[] = res.data;
-          const newIdSet = new Set(list.map(p => p.id));
+          const requests: CommRequest[] = res.data;
+          setActiveRequests(requests);
 
-          // Detect departures — who was in the last snapshot but isn't now
-          const departed: SessionParticipant[] = [];
-          activeParticipantsMapRef.current.forEach((p, id) => {
-            if (!newIdSet.has(id)) departed.push(p);
-          });
-          if (departed.length > 0) {
-            // Remove from seen-set so a rejoin triggers a fresh join toast
-            departed.forEach(p => seenParticipantIdsRef.current.delete(p.id));
-            setLeaveToasts(prev => [...prev, ...departed]);
+          const newEmergencies = requests.filter(
+            r => r.request_type === "emergency" &&
+                 r.status === "pending" &&
+                 !seenEmergencyIdsRef.current.has(r.id)
+          );
+          if (newEmergencies.length > 0) {
+            newEmergencies.forEach(r => seenEmergencyIdsRef.current.add(r.id));
+            setShowEmergencyAlert(true);
           }
 
-          // Update snapshot
-          activeParticipantsMapRef.current = new Map(list.map(p => [p.id, p]));
-          setParticipants(list);
-
-          // Detect arrivals
-          const newcomers = list.filter(p => !seenParticipantIdsRef.current.has(p.id));
-          if (newcomers.length > 0) {
-            newcomers.forEach(p => seenParticipantIdsRef.current.add(p.id));
-            setJoinToasts(prev => [...prev, ...newcomers]);
+          const newNonEmergency = requests.filter(
+            r => r.request_type !== "emergency" &&
+                 r.status === "pending" &&
+                 !seenRequestIdsRef.current.has(r.id)
+          );
+          if (newNonEmergency.length > 0) {
+            newNonEmergency.forEach(r => seenRequestIdsRef.current.add(r.id));
+            setRequestToasts(prev => [...prev, ...newNonEmergency]);
           }
         }).catch(() => {});
     };
@@ -187,9 +111,7 @@ const resolveRequest = async (id: string) => {
     return () => clearInterval(iv);
   }, [sessionActive]);
 
-  const dismissJoinToast  = (id: number) => setJoinToasts(prev => prev.filter(t => t.id !== id));
-  const dismissLeaveToast = (id: number) => setLeaveToasts(prev => prev.filter(t => t.id !== id));
-
+  // ── Student activity (AAC icon taps) polling ──────────────────────────────
   useEffect(() => {
     if (!sessionActive) {
       setStudentActivity([]);
@@ -220,7 +142,6 @@ const resolveRequest = async (id: string) => {
     return () => clearInterval(iv);
   }, [sessionActive]);
 
-  // Follow new responses only if the teacher hasn't scrolled up to read.
   const onFeedScroll = () => {
     const el = activityRef.current;
     if (!el) return;
@@ -235,19 +156,7 @@ const resolveRequest = async (id: string) => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [sentLines.length, panelOpen]);
 
-  const stopRecording = () => {
-    isRecordingRef.current = false;
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    setRecording(false);
-    setLastText("");
-  };
-
-  useEffect(() => () => stopRecording(), []);
-
-  // ── Fullscreen API ────────────────────────────────────────────────────────
-  // Keeps isFullscreen in sync even if the teacher exits with Esc or the
-  // browser's own UI, not just via our button.
+  // ── Fullscreen ────────────────────────────────────────────────────────────
   useEffect(() => {
     const onChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onChange);
@@ -264,7 +173,16 @@ const resolveRequest = async (id: string) => {
     }
   };
 
-  // ── Google Web Speech API (webkitSpeechRecognition) ──────────────────────
+  // ── Speech recognition ────────────────────────────────────────────────────
+  const stopRecording = () => {
+    isRecordingRef.current = false;
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setRecording(false);
+    setLastText("");
+  };
+  useEffect(() => () => stopRecording(), []);
+
   const startRecording = () => {
     if (!sessionActiveRef.current) { setError("Start a session first."); return; }
     if (!SpeechRecognition) { setError("Speech recognition requires Chrome or Edge."); return; }
@@ -272,9 +190,9 @@ const resolveRequest = async (id: string) => {
     setLastText("");
 
     const recog = new SpeechRecognition();
-    recog.continuous      = true;
-    recog.interimResults  = true;
-    recog.lang            = "en-US";
+    recog.continuous     = true;
+    recog.interimResults = true;
+    recog.lang           = "en-US";
 
     recog.onresult = async (e: any) => {
       let interim = "";
@@ -297,36 +215,28 @@ const resolveRequest = async (id: string) => {
       }
       if (interim) setLastText(interim);
     };
-
     recog.onerror = (e: any) => {
       if (e.error !== "no-speech" && e.error !== "aborted")
         setError(`Speech error: ${e.error}`);
     };
+    recog.onend = () => { if (isRecordingRef.current) recog.start(); };
 
-    recog.onend = () => {
-      if (isRecordingRef.current) recog.start();
-    };
-
-    recognitionRef.current   = recog;
-    isRecordingRef.current   = true;
+    recognitionRef.current = recog;
+    isRecordingRef.current = true;
     setRecording(true);
     recog.start();
   };
 
+  // ── Session toggle ────────────────────────────────────────────────────────
   const toggleSession = async () => {
     setTogglingSession(true);
     try {
-      const res = await api.post("/sessions/toggle");
+      const res      = await api.post("/sessions/toggle");
       const nowActive = res.data.active as boolean;
       setSessionActive(nowActive);
-      // Keep the ref in sync immediately (not on next render) so
-      // startRecording()'s session check passes right away below.
       sessionActiveRef.current = nowActive;
       setSessionCode(res.data.session_code || null);
       if (nowActive) {
-        // Google Meet-style: transcription begins the instant the session
-        // goes live. The teacher can mute afterward if they don't want to
-        // broadcast audio right away — muting never ends the session.
         setHintDismissed(false);
         startRecording();
       } else {
@@ -338,6 +248,21 @@ const resolveRequest = async (id: string) => {
     } catch {}
     setTogglingSession(false);
   };
+
+  // ── Request actions ───────────────────────────────────────────────────────
+  const acknowledgeRequest = async (id: string) => {
+    try {
+      await api.patch(`/requests/${id}/`, { status: "acknowledged" });
+      setActiveRequests(prev => prev.map(r => r.id === id ? { ...r, status: "acknowledged" } : r));
+    } catch { setError("Couldn't update the request."); }
+  };
+  const resolveRequest = async (id: string) => {
+    try {
+      await api.patch(`/requests/${id}/`, { status: "resolved" });
+      setActiveRequests(prev => prev.filter(r => r.id !== id));
+    } catch { setError("Couldn't update the request."); }
+  };
+  const dismissToast = (id: string) => setRequestToasts(prev => prev.filter(t => t.id !== id));
 
   const handleManualSend = async () => {
     const text = manualText.trim();
@@ -355,7 +280,7 @@ const resolveRequest = async (id: string) => {
   const showHint = micOff && !hintDismissed;
 
   return {
-    // state
+    sessionLoading,
     recording, lastText, error, setError,
     sessionActive, sessionCode, togglingSession,
     sentLines, studentActivity, manualText, setManualText,
@@ -367,9 +292,7 @@ const resolveRequest = async (id: string) => {
     participants, joinToasts, dismissJoinToast, leaveToasts, dismissLeaveToast,
     participantsPanelOpen, setParticipantsPanelOpen,
     micOff, showHint,
-    // refs (attach directly to DOM nodes)
     activityRef, chatRef, containerRef,
-    // handlers
     onFeedScroll, toggleFullscreen, toggleSession, handleManualSend,
     startRecording, stopRecording,
   };

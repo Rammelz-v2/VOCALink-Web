@@ -7,7 +7,6 @@ import RequestsPanel from "../components/broadcast/RequestsPanel";
 import ControlBar from "../components/broadcast/ControlBar";
 import EmergencyAlert from "../components/broadcast/EmergencyAlert";
 import RequestToastStack from "../components/broadcast/RequestToastStack";
-import JoinToastStack from "../components/broadcast/JoinToastStack";
 import ParticipantsPanel from "../components/broadcast/ParticipantsPanel";
 
 const Broadcast: React.FC = () => {
@@ -29,6 +28,7 @@ const Broadcast: React.FC = () => {
 
       <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 12 }}>
         <Stage
+          sessionLoading={bc.sessionLoading}
           sessionActive={bc.sessionActive}
           studentActivity={bc.studentActivity}
           feedRef={bc.activityRef}
@@ -71,6 +71,7 @@ const Broadcast: React.FC = () => {
       </div>
 
       <ControlBar
+        sessionLoading={bc.sessionLoading}
         sessionActive={bc.sessionActive}
         sessionCode={bc.sessionCode}
         recording={bc.recording}
@@ -94,13 +95,6 @@ const Broadcast: React.FC = () => {
         toasts={bc.requestToasts}
         onAcknowledge={bc.acknowledgeRequest}
         onDismiss={bc.dismissToast}
-      />
-
-      <JoinToastStack
-        toasts={bc.joinToasts}
-        leaveToasts={bc.leaveToasts}
-        onDismiss={bc.dismissJoinToast}
-        onDismissLeave={bc.dismissLeaveToast}
       />
 
       {bc.showEmergencyAlert &&

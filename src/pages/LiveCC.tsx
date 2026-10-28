@@ -8,13 +8,22 @@ import LogList from "../components/livecc/LogList";
 import Placeholder from "../components/livecc/Placeholder";
 
 const LiveCC: React.FC = () => {
-  const { sessions, selectedId, selectSession, sessionLog, loading, refresh, mergedEntries } = useLiveCCSessions();
+  const { sessions, selectedId, selectSession, sessionLog, loading, sessionsLoading, refresh, mergedEntries } = useLiveCCSessions();
 
   return (
     <Card>
-      <LiveCCHeader isLive={!!sessionLog?.is_active} onRefresh={refresh} />
+      <LiveCCHeader
+        isLive={!sessionsLoading && !!sessionLog?.is_active}
+        loading={sessionsLoading}
+        onRefresh={refresh}
+      />
 
-      <SessionSelector sessions={sessions} selectedId={selectedId} onChange={selectSession} />
+      <SessionSelector
+        sessions={sessions}
+        selectedId={selectedId}
+        onChange={selectSession}
+        loading={sessionsLoading}
+      />
 
       {sessionLog && <SessionMetaBar sessionLog={sessionLog} />}
 
@@ -30,6 +39,10 @@ const LiveCC: React.FC = () => {
 
       {!loading && !sessionLog && sessions.length > 0 && (
         <Placeholder>Select a session above to view its log.</Placeholder>
+      )}
+
+      {!sessionsLoading && !loading && sessions.length === 0 && (
+        <Placeholder>No sessions yet. Start a class from the Broadcast page.</Placeholder>
       )}
     </Card>
   );

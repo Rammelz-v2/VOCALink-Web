@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import "./styles/global.css";
 import "./styles/auth.css";
@@ -13,25 +13,22 @@ import Settings       from "./pages/Settings";
 import Login          from "./pages/auth/Login";
 import Signup         from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import JoinToastStack from "./components/broadcast/JoinToastStack";
 
-import { useAuth }       from "./context/AuthContext";
+import { useAuth }    from "./context/AuthContext";
+import { SessionProvider, useSession } from "./context/SessionContext";
 import type { NavPage } from "./types";
-import api from "./services/api";
 
-const DashboardLayout: React.FC = () => {
-  const [active, setActive]               = useState<NavPage>("dashboard");
-  const [teacherName,     setTeacherName]     = useState("");
-  const [teacherInitials, setTeacherInitials] = useState("");
-  const [teacherPhoto,    setTeacherPhoto]    = useState<string | null>(null);
+const DashboardInner: React.FC = () => {
+  const [active, setActive] = useState<NavPage>("dashboard");
 
-  useEffect(() => {
-    api.get("/users/me/").then(res => {
-      const data = res.data;
-      const name = data.display_name || data.first_name || data.username || "Teacher";
-      setTeacherName(name);
-      setTeacherInitials(name.substring(0, 2).toUpperCase());
-    }).catch(() => {});
-  }, []);
+  const {
+    joinToasts, leaveToasts, dismissJoinToast, dismissLeaveToast,
+    profile, profileLoading, teacherPhoto, setTeacherPhoto, setProfile,
+  } = useSession();
+
+  const teacherName     = profile?.display_name || profile?.first_name || profile?.username || "";
+  const teacherInitials = teacherName ? teacherName.substring(0, 2).toUpperCase() : "";
 
   const renderPage = () => {
     switch (active) {
@@ -42,7 +39,7 @@ const DashboardLayout: React.FC = () => {
         <Settings
           teacherName={teacherName}
           teacherPhoto={teacherPhoto}
-          onNameChange={(name, initials) => { setTeacherName(name); setTeacherInitials(initials); }}
+          onNameChange={(name) => setProfile((p: any) => p ? { ...p, display_name: name } : p)}
           onPhotoChange={setTeacherPhoto}
         />
       );
@@ -58,6 +55,7 @@ const DashboardLayout: React.FC = () => {
         teacherName={teacherName}
         teacherInitials={teacherInitials}
         teacherPhoto={teacherPhoto}
+        profileLoading={profileLoading}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <Topbar page={active} />
@@ -65,9 +63,23 @@ const DashboardLayout: React.FC = () => {
           {renderPage()}
         </main>
       </div>
+
+      {/* Global join/leave toasts — visible on every page, never reset on navigation */}
+      <JoinToastStack
+        toasts={joinToasts}
+        leaveToasts={leaveToasts}
+        onDismiss={dismissJoinToast}
+        onDismissLeave={dismissLeaveToast}
+      />
     </div>
   );
 };
+
+const DashboardLayout: React.FC = () => (
+  <SessionProvider>
+    <DashboardInner />
+  </SessionProvider>
+);
 
 const App: React.FC = () => {
   const { user } = useAuth();

@@ -13,7 +13,8 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
   const {
-    profile, today, sessionActive, sessionCode,
+    profile, today, sessionLoading, profileLoading,
+    sessionActive, sessionCode,
     participants, pendingRequests, recentSessions,
   } = useDashboardData();
 
@@ -22,8 +23,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <WelcomeBanner
+        loading={profileLoading}
         today={today}
-        teacherName={profile?.first_name || profile?.display_name || "Teacher"}
+        teacherName={profile?.display_name || profile?.first_name || profile?.username || ""}
         roomSection={profile?.room_section}
         department={profile?.department}
         onStartBroadcast={() => setActive("broadcast")}
@@ -32,7 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
       {/* Stats row */}
       <div style={{ display: "flex", gap: 16 }}>
         <StatCard
-          value={participants.length}
+          value={sessionLoading ? "—" : participants.length}
           label="Active Students"
           bg="linear-gradient(135deg, #F0FDF4, #DCFCE7)"
           iconBg="linear-gradient(135deg, #16A34A, #15803D)"
@@ -44,10 +46,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
               <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
           }
-          trend={sessionActive ? "In current session" : "No active session"}
+          trend={sessionLoading ? undefined : sessionActive ? "In current session" : "No active session"}
         />
         <StatCard
-          value={pendingRequests}
+          value={sessionLoading ? "—" : pendingRequests}
           label="Pending Requests"
           bg="linear-gradient(135deg, #FFF7ED, #FFEDD5)"
           iconBg="linear-gradient(135deg, #EA580C, #C2410C)"
@@ -57,7 +59,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           }
-          trend={pendingRequests > 0 ? "Needs attention" : "All clear"}
+          trend={sessionLoading ? undefined : pendingRequests > 0 ? "Needs attention" : "All clear"}
         />
         <StatCard
           value={totalSessions}
@@ -79,6 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActive }) => {
       {/* Main content + sidebar */}
       <div style={{ display: "flex", gap: 20 }}>
         <LiveSessionCard
+          loading={sessionLoading}
           sessionActive={sessionActive}
           sessionCode={sessionCode}
           participants={participants}

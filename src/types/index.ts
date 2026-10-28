@@ -1,3 +1,17 @@
+export interface SessionParticipant {
+  id:        number;
+  user_id:   number;
+  name:      string;
+  joined_at: string;
+}
+
+export interface SessionMeta {
+  id:           number;
+  session_code: string;
+  started_at:   string;
+  is_active:    boolean;
+}
+
 export type StudentStatus = "online" | "idle" | "request" | "urgent";
 
 export interface Student {

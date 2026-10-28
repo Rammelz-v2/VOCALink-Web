@@ -56,7 +56,7 @@ const TABS: { id: Tab; label: string }[] = [
 interface SettingsProps {
   teacherName: string;
   teacherPhoto: string | null;
-  onNameChange: (name: string, initials: string) => void;
+  onNameChange: (name: string) => void;
   onPhotoChange: (url: string | null) => void;
 }
 
@@ -145,7 +145,7 @@ const Settings: React.FC<SettingsProps> = ({ teacherPhoto, onNameChange, onPhoto
         organization, bio,
       });
       const savedName = displayName.trim() || username;
-      onNameChange(savedName, savedName.substring(0, 2).toUpperCase());
+      onNameChange(savedName);
       setSavedDisplayName(savedName);
       setSavedDepartment(department);
       onPhotoChange(pendingPhoto);
