@@ -19,6 +19,9 @@ interface ControlBarProps {
   requestsPanelOpen: boolean;
   onToggleRequestsPanel: () => void;
   requestCount: number;
+  participantsPanelOpen: boolean;
+  onToggleParticipantsPanel: () => void;
+  participantCount: number;
 }
 
 /** Bottom bar: session code (left) · mic + start/end (center) · panel toggle (right). */
@@ -26,6 +29,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   sessionActive, sessionCode, recording, micOff, showHint, onDismissHint,
   onToggleMic, togglingSession, onToggleSession, panelOpen, onTogglePanel,
   requestsPanelOpen, onToggleRequestsPanel, requestCount,
+  participantsPanelOpen, onToggleParticipantsPanel, participantCount,
 }) => (
   <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, paddingTop: 12 }}>
 
@@ -99,6 +103,37 @@ const ControlBar: React.FC<ControlBarProps> = ({
     </div>
 
     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, paddingRight: 8 }}>
+      {/* Participants */}
+      <button
+        className="bc-btn"
+        onClick={onToggleParticipantsPanel}
+        aria-label="Session participants"
+        aria-pressed={participantsPanelOpen}
+        title="Session participants"
+        style={{
+          ...btnBase, width: 48, height: 48, borderRadius: "50%", position: "relative",
+          background: participantsPanelOpen ? "#4ADE8022" : D.surface,
+          border: participantsPanelOpen ? "1px solid #4ADE8055" : "1px solid transparent",
+        }}
+      >
+        <Glyph
+          d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+          size={22}
+          color={participantsPanelOpen ? "#4ADE80" : D.text}
+        />
+        {participantCount > 0 && (
+          <span style={{
+            position: "absolute", top: -2, right: -2, minWidth: 18, height: 18,
+            borderRadius: 9, background: "#4ADE80", color: "#0D0D0D",
+            fontSize: 11, fontWeight: 700, lineHeight: "18px", textAlign: "center",
+            padding: "0 4px",
+          }}>
+            {participantCount}
+          </span>
+        )}
+      </button>
+
+      {/* Requests */}
       <button
         className="bc-btn"
         onClick={onToggleRequestsPanel}
@@ -127,6 +162,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
         )}
       </button>
 
+      {/* Messages */}
       <button
         className="bc-btn"
         onClick={onTogglePanel}

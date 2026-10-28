@@ -7,6 +7,8 @@ import RequestsPanel from "../components/broadcast/RequestsPanel";
 import ControlBar from "../components/broadcast/ControlBar";
 import EmergencyAlert from "../components/broadcast/EmergencyAlert";
 import RequestToastStack from "../components/broadcast/RequestToastStack";
+import JoinToastStack from "../components/broadcast/JoinToastStack";
+import ParticipantsPanel from "../components/broadcast/ParticipantsPanel";
 
 const Broadcast: React.FC = () => {
   const bc = useBroadcastSession();
@@ -59,6 +61,13 @@ const Broadcast: React.FC = () => {
             onResolve={bc.resolveRequest}
           />
         )}
+
+        {bc.participantsPanelOpen && (
+          <ParticipantsPanel
+            onClose={() => bc.setParticipantsPanelOpen(false)}
+            participants={bc.participants}
+          />
+        )}
       </div>
 
       <ControlBar
@@ -76,12 +85,22 @@ const Broadcast: React.FC = () => {
         requestsPanelOpen={bc.requestsPanelOpen}
         onToggleRequestsPanel={() => bc.setRequestsPanelOpen(o => !o)}
         requestCount={bc.activeRequests.length}
+        participantsPanelOpen={bc.participantsPanelOpen}
+        onToggleParticipantsPanel={() => bc.setParticipantsPanelOpen(o => !o)}
+        participantCount={bc.participants.length}
       />
 
       <RequestToastStack
         toasts={bc.requestToasts}
         onAcknowledge={bc.acknowledgeRequest}
         onDismiss={bc.dismissToast}
+      />
+
+      <JoinToastStack
+        toasts={bc.joinToasts}
+        leaveToasts={bc.leaveToasts}
+        onDismiss={bc.dismissJoinToast}
+        onDismissLeave={bc.dismissLeaveToast}
       />
 
       {bc.showEmergencyAlert &&

@@ -12,6 +12,13 @@ export interface StudentActivity {
   text:         string;
 }
 
+export interface SessionParticipant {
+  id:        number;
+  user_id:   number;
+  name:      string;
+  joined_at: string;
+}
+
 export interface CommRequest {
   id:           string;
   student_id:   number;
@@ -50,6 +57,13 @@ export function useBroadcastSession() {
 
   const [requestToasts, setRequestToasts] = useState<CommRequest[]>([]);
   const seenRequestIdsRef = useRef<Set<string>>(new Set());
+
+  const [participants,   setParticipants]   = useState<SessionParticipant[]>([]);
+  const [joinToasts,     setJoinToasts]     = useState<SessionParticipant[]>([]);
+  const [leaveToasts,    setLeaveToasts]    = useState<SessionParticipant[]>([]);
+  const seenParticipantIdsRef    = useRef<Set<number>>(new Set());
+  const activeParticipantsMapRef = useRef<Map<number, SessionParticipant>>(new Map());
+  const [participantsPanelOpen, setParticipantsPanelOpen] = useState(false);
 
   const lastIconIdRef    = useRef(0);
   const activityRef      = useRef<HTMLDivElement>(null);
@@ -128,6 +142,53 @@ const resolveRequest = async (id: string) => {
     setError("Couldn't update the request.");
   }
 };
+
+  // ── Participant polling ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!sessionActive) {
+      setParticipants([]);
+      setJoinToasts([]);
+      setLeaveToasts([]);
+      seenParticipantIdsRef.current.clear();
+      activeParticipantsMapRef.current.clear();
+      return;
+    }
+    const poll = () => {
+      api.get("/sessions/active/participants/")
+        .then(res => {
+          const list: SessionParticipant[] = res.data;
+          const newIdSet = new Set(list.map(p => p.id));
+
+          // Detect departures — who was in the last snapshot but isn't now
+          const departed: SessionParticipant[] = [];
+          activeParticipantsMapRef.current.forEach((p, id) => {
+            if (!newIdSet.has(id)) departed.push(p);
+          });
+          if (departed.length > 0) {
+            // Remove from seen-set so a rejoin triggers a fresh join toast
+            departed.forEach(p => seenParticipantIdsRef.current.delete(p.id));
+            setLeaveToasts(prev => [...prev, ...departed]);
+          }
+
+          // Update snapshot
+          activeParticipantsMapRef.current = new Map(list.map(p => [p.id, p]));
+          setParticipants(list);
+
+          // Detect arrivals
+          const newcomers = list.filter(p => !seenParticipantIdsRef.current.has(p.id));
+          if (newcomers.length > 0) {
+            newcomers.forEach(p => seenParticipantIdsRef.current.add(p.id));
+            setJoinToasts(prev => [...prev, ...newcomers]);
+          }
+        }).catch(() => {});
+    };
+    poll();
+    const iv = setInterval(poll, 3000);
+    return () => clearInterval(iv);
+  }, [sessionActive]);
+
+  const dismissJoinToast  = (id: number) => setJoinToasts(prev => prev.filter(t => t.id !== id));
+  const dismissLeaveToast = (id: number) => setLeaveToasts(prev => prev.filter(t => t.id !== id));
 
   useEffect(() => {
     if (!sessionActive) {
@@ -303,6 +364,8 @@ const resolveRequest = async (id: string) => {
     activeRequests, acknowledgeRequest, resolveRequest,
     showEmergencyAlert, setShowEmergencyAlert,
     requestToasts, dismissToast,
+    participants, joinToasts, dismissJoinToast, leaveToasts, dismissLeaveToast,
+    participantsPanelOpen, setParticipantsPanelOpen,
     micOff, showHint,
     // refs (attach directly to DOM nodes)
     activityRef, chatRef, containerRef,
