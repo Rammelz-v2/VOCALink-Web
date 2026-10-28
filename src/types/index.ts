@@ -16,7 +16,6 @@ export interface QuickReply {
 
 export type NavPage =
   | "dashboard"
-  | "students"
   | "broadcast"
   | "livecc"
   | "settings";

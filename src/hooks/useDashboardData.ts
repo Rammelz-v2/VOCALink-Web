@@ -1,67 +1,74 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "../services/api";
-import type { Student } from "../types";
 
-const AVATAR_PALETTE = [
-  { bg: "#E0F6FD", color: "#0E8DB8" },
-  { bg: "#FEF3C7", color: "#B45309" },
-  { bg: "#FCE7F3", color: "#9D174D" },
-  { bg: "#EDE9FE", color: "#5B21B6" },
-  { bg: "#D1FAE5", color: "#065F46" },
-];
-
-function avatarColor(id: number) {
-  return AVATAR_PALETTE[id % AVATAR_PALETTE.length];
+export interface DashboardParticipant {
+  id: number;
+  name: string;
 }
 
-function displayName(s: { first_name: string; last_name: string; username: string }) {
-  return (s.first_name || s.last_name) ? `${s.first_name} ${s.last_name}`.trim() : s.username;
+export interface DashboardSession {
+  id: number;
+  session_code: string;
+  started_at: string;
+  is_active: boolean;
 }
 
-/**
- * Fetches the teacher profile + roster for the dashboard, and formats
- * students with a stable avatar color. All Dashboard data-fetching lives
- * here so the page component only has to worry about layout.
- */
 export function useDashboardData() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [profile, setProfile] = useState<any>(null);
+  const [profile,          setProfile]          = useState<any>(null);
+  const [sessionActive,    setSessionActive]    = useState(false);
+  const [sessionCode,      setSessionCode]      = useState<string | null>(null);
+  const [participants,     setParticipants]     = useState<DashboardParticipant[]>([]);
+  const [pendingRequests,  setPendingRequests]  = useState(0);
+  const [recentSessions,   setRecentSessions]   = useState<DashboardSession[]>([]);
+  const [loading,          setLoading]          = useState(true);
 
   const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
+    weekday: "long", month: "long", day: "numeric",
   });
 
-  useEffect(() => {
-    api.get("/users/me/").then(res => setProfile(res.data)).catch(() => {});
+  const refresh = useCallback(() => {
+    api.get("/sessions/teacher").then(res => {
+      setSessionActive(res.data.active);
+      setSessionCode(res.data.session_code || null);
+    }).catch(() => {});
 
-    const fetchStudents = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get("/teacher/students/");
-        const data: any[] = Array.isArray(res.data) ? res.data : [];
-        const formatted: Student[] = data.map((s) => {
-          const av = avatarColor(s.id);
-          return {
-            id: s.id,
-            name: displayName(s),
-            status: "idle" as const,
-            bg: av.bg,
-            color: av.color,
-          };
-        });
-        setStudents(formatted);
-      } catch {
-        setError("Could not load students.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStudents();
+    api.get("/sessions/all/").then(res => {
+      setRecentSessions(Array.isArray(res.data) ? res.data.slice(0, 5) : []);
+    }).catch(() => {});
   }, []);
 
-  return { students, loading, error, profile, today };
+  useEffect(() => {
+    setLoading(true);
+    api.get("/users/me/").then(res => setProfile(res.data)).catch(() => {});
+    refresh();
+    setLoading(false);
+  }, [refresh]);
+
+  // Poll participants and pending requests while session is active
+  useEffect(() => {
+    if (!sessionActive) {
+      setParticipants([]);
+      setPendingRequests(0);
+      return;
+    }
+    const poll = () => {
+      api.get("/sessions/active/participants/").then(res => {
+        setParticipants(Array.isArray(res.data) ? res.data : []);
+      }).catch(() => {});
+      api.get("/requests/active/?since=0").then(res => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        setPendingRequests(list.filter((r: any) => r.status === "pending").length);
+      }).catch(() => {});
+    };
+    poll();
+    const iv = setInterval(poll, 5000);
+    return () => clearInterval(iv);
+  }, [sessionActive]);
+
+  return {
+    profile, today, loading,
+    sessionActive, sessionCode,
+    participants, pendingRequests,
+    recentSessions, refresh,
+  };
 }
