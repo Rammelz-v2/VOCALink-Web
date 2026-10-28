@@ -111,7 +111,7 @@ const Settings: React.FC<SettingsProps> = ({ teacherPhoto, onNameChange, onPhoto
       setBio(d.bio                 || "");
       setSavedDisplayName(dname);
       setSavedDepartment(d.department || "");
-      onNameChange(dname || "Teacher", (dname || "Teacher").substring(0, 2).toUpperCase());
+      onNameChange(dname || "Teacher");
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
