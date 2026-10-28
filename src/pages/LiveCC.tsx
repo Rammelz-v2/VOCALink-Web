@@ -8,7 +8,7 @@ import LogList from "../components/livecc/LogList";
 import Placeholder from "../components/livecc/Placeholder";
 
 const LiveCC: React.FC = () => {
-  const { sessions, selectedId, selectSession, sessionLog, loading, refresh } = useLiveCCSessions();
+  const { sessions, selectedId, selectSession, sessionLog, loading, refresh, mergedEntries } = useLiveCCSessions();
 
   return (
     <Card>
@@ -20,12 +20,12 @@ const LiveCC: React.FC = () => {
 
       {loading && <Placeholder>Loading session log…</Placeholder>}
 
-      {!loading && sessionLog && sessionLog.entries.length === 0 && (
+      {!loading && sessionLog && mergedEntries.length === 0 && (
         <Placeholder>No activity yet in this session. Start broadcasting or wait for students to tap icons.</Placeholder>
       )}
 
-      {!loading && sessionLog && sessionLog.entries.length > 0 && (
-        <LogList entries={sessionLog.entries} />
+      {!loading && sessionLog && mergedEntries.length > 0 && (
+        <LogList entries={mergedEntries} />
       )}
 
       {!loading && !sessionLog && sessions.length > 0 && (
