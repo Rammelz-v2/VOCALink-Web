@@ -7,7 +7,6 @@ import { Colors as C } from "./styles/tokens";
 import Sidebar        from "./components/layout/Sidebar";
 import Topbar         from "./components/layout/Topbar";
 import Dashboard      from "./pages/Dashboard";
-import Students       from "./pages/Students";
 import Broadcast      from "./pages/Broadcast";
 import LiveCC         from "./pages/LiveCC";
 import Settings       from "./pages/Settings";
@@ -37,7 +36,6 @@ const DashboardLayout: React.FC = () => {
   const renderPage = () => {
     switch (active) {
       case "dashboard": return <Dashboard setActive={setActive} />;
-      case "students":  return <Students />;
       case "broadcast": return <Broadcast />;
       case "livecc":    return <LiveCC />;
       case "settings":  return (
@@ -63,7 +61,7 @@ const DashboardLayout: React.FC = () => {
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <Topbar page={active} />
-        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 20, background: "#F0F5F9" }}>
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 20, background: C.bg }}>
           {renderPage()}
         </main>
       </div>

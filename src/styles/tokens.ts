@@ -3,11 +3,11 @@ export const Colors = {
   teal:           "#1AADDC",
   tealDark:       "#0E8DB8",
   tealMid:        "#0DD0F5",
-  tealLight:      "#E0F6FD",
+  tealLight:      "var(--c-teal-light)",
   tealBorder:     "#93D9EE",
   tealGradient:   "linear-gradient(135deg, #1AADDC 0%, #0E8DB8 100%)",
 
-  // ── Sidebar (dark) ─────────────────────────
+  // ── Sidebar (always dark — no CSS var needed) ──
   sidebar:        "#0F172A",
   sidebarHover:   "rgba(255,255,255,0.06)",
   sidebarActive:  "rgba(26,173,220,0.15)",
@@ -18,28 +18,28 @@ export const Colors = {
   // ── Purple ─────────────────────────────────
   purple:         "#534AB7",
   purpleMid:      "#AFA9EC",
-  purpleLight:    "#EEEDFE",
+  purpleLight:    "var(--c-purple-light)",
 
   // ── Semantic ───────────────────────────────
   amber:          "#BA7517",
-  amberLight:     "#FAEEDA",
+  amberLight:     "var(--c-amber-light)",
   red:            "#A32D2D",
   redDark:        "#E24B4A",
-  redLight:       "#FCEBEB",
+  redLight:       "var(--c-red-light)",
   blue:           "#0C447C",
-  blueLight:      "#E6F1FB",
+  blueLight:      "var(--c-blue-light)",
   green:          "#0F7144",
-  greenLight:     "#DCFCE7",
+  greenLight:     "var(--c-green-light)",
 
-  // ── Neutral ────────────────────────────────
-  gray:           "#F1F5F9",
-  gray2:          "#E2E8F0",
-  gray3:          "#94A3B8",
-  text:           "#0F172A",
-  text2:          "#475569",
-  text3:          "#94A3B8",
-  white:          "#FFFFFF",
-  bg:             "#F0F5F9",
+  // ── Neutral (theme-aware) ──────────────────
+  gray:           "var(--c-gray)",
+  gray2:          "var(--c-gray2)",
+  gray3:          "var(--c-gray3)",
+  text:           "var(--c-text)",
+  text2:          "var(--c-text2)",
+  text3:          "var(--c-text3)",
+  white:          "var(--c-surface)",
+  bg:             "var(--c-bg)",
 };
 
 export const Radius = {

@@ -7,10 +7,45 @@
   padding: 0;
 }
 
+/* ── Theme tokens ───────────────────────────────────────────────────────── */
+:root {
+  --c-bg:           #F0F5F9;
+  --c-surface:      #FFFFFF;
+  --c-gray:         #F1F5F9;
+  --c-gray2:        #E2E8F0;
+  --c-gray3:        #94A3B8;
+  --c-text:         #0F172A;
+  --c-text2:        #475569;
+  --c-text3:        #94A3B8;
+  --c-teal-light:   #E0F6FD;
+  --c-purple-light: #EEEDFE;
+  --c-amber-light:  #FAEEDA;
+  --c-red-light:    #FCEBEB;
+  --c-blue-light:   #E6F1FB;
+  --c-green-light:  #DCFCE7;
+}
+
+[data-theme="dark"] {
+  --c-bg:           #0F172A;
+  --c-surface:      #1E293B;
+  --c-gray:         #1E293B;
+  --c-gray2:        #334155;
+  --c-gray3:        #64748B;
+  --c-text:         #E2E8F0;
+  --c-text2:        #94A3B8;
+  --c-text3:        #64748B;
+  --c-teal-light:   rgba(26,173,220,0.14);
+  --c-purple-light: rgba(83,74,183,0.15);
+  --c-amber-light:  rgba(186,117,23,0.15);
+  --c-red-light:    rgba(163,45,45,0.15);
+  --c-blue-light:   rgba(12,68,124,0.15);
+  --c-green-light:  rgba(34,197,94,0.11);
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: #F0F5F9;
-  color: #0F172A;
+  background: var(--c-bg);
+  color: var(--c-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -32,4 +67,4 @@ input, textarea, select {
 ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
 /* Selection */
-::selection { background: rgba(26,173,220,0.2); color: #0F172A; }
+::selection { background: rgba(26,173,220,0.2); color: var(--c-text); }
