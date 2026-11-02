@@ -20,6 +20,8 @@ export default function Login() {
   useEffect(() => {
     if (location.search.includes("registered=1")) {
       setSuccessMsg("Account created! Please sign in.");
+    } else if (location.search.includes("reset=1")) {
+      setSuccessMsg("Password reset successfully! You can now sign in.");
     }
   }, [location.search]);
 
@@ -86,7 +88,7 @@ export default function Login() {
             </div>
 
             <button className="primary-btn" type="submit" disabled={loading}>
-              {loading ? "Signing in…" : "Login"}
+              {loading ? "Signing in…" : "Sign In"}
             </button>
 
             <p className="bottom-text">

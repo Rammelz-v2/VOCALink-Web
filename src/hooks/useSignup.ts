@@ -34,19 +34,22 @@ export const useSignup = () => {
     setLoading(true);
     setLoadingMsg("Creating account…");
 
-    // Warn user if it's taking long (Render cold start)
     const slowTimer = setTimeout(() => {
-      setLoadingMsg("Still working… server is waking up (up to 60s)");
+      setLoadingMsg("Almost there… server is starting up, please don't refresh.");
     }, 8000);
 
     try {
       await signup({ username, email, password, status: "TEACHER" });
       clearTimeout(slowTimer);
-      setSuccess("Account created! You can now sign in.");
-      setTimeout(() => navigate("/login"), 1500);
+      navigate("/login?registered=1");
     } catch (err: any) {
       clearTimeout(slowTimer);
-      setError(err?.message || "Signup failed. Please try again.");
+      const msg = err?.message || "";
+      if (msg.toLowerCase().includes("already taken") || msg.toLowerCase().includes("already exists")) {
+        setError("An account with that username or email already exists. Try signing in instead.");
+      } else {
+        setError(msg || "Signup failed. Please try again.");
+      }
     } finally {
       setLoading(false);
       setLoadingMsg("Creating account…");

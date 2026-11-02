@@ -21,12 +21,8 @@ export const useLogin = () => {
     setError("");
     setLoading(true);
     try {
-      // 1. Send the data to your AuthContext
       await login({ identifier, password, remember });
-      
-      // 2. If the Teacher Bouncer lets them through, send them to the dashboard!
       navigate("/dashboard");
-      
     } catch (err: any) {
       setError(err?.message || "Invalid email or password.");
     } finally {

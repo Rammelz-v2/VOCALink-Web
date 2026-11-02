@@ -13,6 +13,7 @@ import Settings       from "./pages/Settings";
 import Login          from "./pages/auth/Login";
 import Signup         from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword  from "./pages/auth/ResetPassword";
 import JoinToastStack from "./components/broadcast/JoinToastStack";
 
 import { useAuth }    from "./context/AuthContext";
@@ -102,11 +103,12 @@ const App: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/login"           element={!user ? <Login />          : <Navigate to="/dashboard" />} />
-      <Route path="/signup"          element={!user ? <Signup />         : <Navigate to="/dashboard" />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/dashboard/*"     element={user  ? <DashboardLayout /> : <Navigate to="/login" />} />
-      <Route path="*"                element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+      <Route path="/login"            element={!user ? <Login />          : <Navigate to="/dashboard" />} />
+      <Route path="/signup"           element={!user ? <Signup />         : <Navigate to="/dashboard" />} />
+      <Route path="/forgot-password"  element={<ForgotPassword />} />
+      <Route path="/reset-password"   element={<ResetPassword />} />
+      <Route path="/dashboard/*"      element={user  ? <DashboardLayout /> : <Navigate to="/login" />} />
+      <Route path="*"                 element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
   );
 };
