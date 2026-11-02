@@ -4,17 +4,10 @@ import { useSession } from "../context/SessionContext";
 import type { SessionParticipant } from "../types";
 
 export type { SessionParticipant };
+export type { StudentActivity } from "../types";
 
 const SpeechRecognition: any =
   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-export interface StudentActivity {
-  id:           string;
-  type:         "icon";
-  time:         string;
-  student_name: string;
-  text:         string;
-}
 
 export interface CommRequest {
   id:           string;
@@ -27,14 +20,16 @@ export interface CommRequest {
 }
 
 export function useBroadcastSession() {
-  // Session state + participant toasts come from context so they:
+  // Session state + student activity + participant toasts come from context so they:
   //  • survive page navigation (no flash when returning to Broadcast)
-  //  • run participant polling on every page (global notifications)
+  //  • run polling on every page (global notifications)
   const {
     sessionLoading,
     sessionActive,    setSessionActive,
     sessionCode,      setSessionCode,
     togglingSession,  setTogglingSession,
+    studentActivity,  activityLoading,
+    sentLines,        setSentLines,
     participants,
     joinToasts,       leaveToasts,
     dismissJoinToast, dismissLeaveToast,
@@ -44,20 +39,15 @@ export function useBroadcastSession() {
   const [recording,          setRecording]          = useState(false);
   const [lastText,           setLastText]           = useState("");
   const [error,              setError]              = useState("");
-  const [sentLines,          setSentLines]          = useState<string[]>([]);
-  const [studentActivity,    setStudentActivity]    = useState<StudentActivity[]>([]);
   const [manualText,         setManualText]         = useState("");
   const [panelOpen,          setPanelOpen]          = useState(false);
   const [requestsPanelOpen,  setRequestsPanelOpen]  = useState(false);
   const [hintDismissed,      setHintDismissed]      = useState(false);
   const [isFullscreen,       setIsFullscreen]       = useState(false);
   const [showEmergencyAlert, setShowEmergencyAlert] = useState(false);
-  const [requestToasts,      setRequestToasts]      = useState<CommRequest[]>([]);
   const [participantsPanelOpen, setParticipantsPanelOpen] = useState(false);
 
   const seenEmergencyIdsRef = useRef<Set<string>>(new Set());
-  const seenRequestIdsRef   = useRef<Set<string>>(new Set());
-  const lastIconIdRef       = useRef(0);
   const activityRef         = useRef<HTMLDivElement>(null);
   const chatRef             = useRef<HTMLDivElement>(null);
   const containerRef        = useRef<HTMLDivElement>(null);
@@ -71,6 +61,8 @@ export function useBroadcastSession() {
     sessionActiveRef.current = sessionActive;
     // If the session was killed externally (inactivity), stop the mic.
     if (!sessionActive && isRecordingRef.current) stopRecording();
+    // Reset scroll-stick when session ends.
+    if (!sessionActive) stickRef.current = true;
   }, [sessionActive]);
 
   // ── Request polling ───────────────────────────────────────────────────────
@@ -94,51 +86,10 @@ export function useBroadcastSession() {
             newEmergencies.forEach(r => seenEmergencyIdsRef.current.add(r.id));
             setShowEmergencyAlert(true);
           }
-
-          const newNonEmergency = requests.filter(
-            r => r.request_type !== "emergency" &&
-                 r.status === "pending" &&
-                 !seenRequestIdsRef.current.has(r.id)
-          );
-          if (newNonEmergency.length > 0) {
-            newNonEmergency.forEach(r => seenRequestIdsRef.current.add(r.id));
-            setRequestToasts(prev => [...prev, ...newNonEmergency]);
-          }
         }).catch(() => {});
     };
     poll();
     const iv = setInterval(poll, 3000);
-    return () => clearInterval(iv);
-  }, [sessionActive]);
-
-  // ── Student activity (AAC icon taps) polling ──────────────────────────────
-  useEffect(() => {
-    if (!sessionActive) {
-      setStudentActivity([]);
-      lastIconIdRef.current = 0;
-      stickRef.current = true;
-      return;
-    }
-    const poll = () => {
-      api.get(`/sessions/logs/?since=${lastIconIdRef.current}`)
-        .then(res => {
-          const logs: any[] = res.data;
-          if (!logs.length) return;
-          const entries: StudentActivity[] = logs.map(l => ({
-            id:           `icon-${l.id}`,
-            type:         "icon" as const,
-            time:         l.tapped_at || "",
-            student_name: l.student_name || "Student",
-            text:         l.message || l.icon_label,
-          }));
-          setStudentActivity(prev =>
-            [...prev, ...entries].sort((a, b) => a.time.localeCompare(b.time))
-          );
-          lastIconIdRef.current = logs[logs.length - 1].id;
-        }).catch(() => {});
-    };
-    poll();
-    const iv = setInterval(poll, 2000);
     return () => clearInterval(iv);
   }, [sessionActive]);
 
@@ -173,7 +124,7 @@ export function useBroadcastSession() {
     }
   };
 
-  // ── Speech recognition ────────────────────────────────────────────────────
+  // ── Speech recognition (browser Web Speech API — continuous, real-time) ─────
   const stopRecording = () => {
     isRecordingRef.current = false;
     recognitionRef.current?.stop();
@@ -240,9 +191,6 @@ export function useBroadcastSession() {
         setHintDismissed(false);
         startRecording();
       } else {
-        setSentLines([]);
-        setStudentActivity([]);
-        lastIconIdRef.current = 0;
         if (recording) stopRecording();
       }
     } catch {}
@@ -262,8 +210,6 @@ export function useBroadcastSession() {
       setActiveRequests(prev => prev.filter(r => r.id !== id));
     } catch { setError("Couldn't update the request."); }
   };
-  const dismissToast = (id: string) => setRequestToasts(prev => prev.filter(t => t.id !== id));
-
   const handleManualSend = async () => {
     const text = manualText.trim();
     if (!text) return;
@@ -283,12 +229,11 @@ export function useBroadcastSession() {
     sessionLoading,
     recording, lastText, error, setError,
     sessionActive, sessionCode, togglingSession,
-    sentLines, studentActivity, manualText, setManualText,
+    sentLines, studentActivity, activityLoading, manualText, setManualText,
     panelOpen, setPanelOpen, hintDismissed, setHintDismissed, isFullscreen,
     requestsPanelOpen, setRequestsPanelOpen,
     activeRequests, acknowledgeRequest, resolveRequest,
     showEmergencyAlert, setShowEmergencyAlert,
-    requestToasts, dismissToast,
     participants, joinToasts, dismissJoinToast, leaveToasts, dismissLeaveToast,
     participantsPanelOpen, setParticipantsPanelOpen,
     micOff, showHint,

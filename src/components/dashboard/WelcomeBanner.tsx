@@ -1,6 +1,7 @@
 import React from "react";
 import { Radius, Shadow, FontSize } from "../../styles/tokens";
 import { Button } from "../ui";
+import { useTheme } from "../../context/ThemeContext";
 
 interface WelcomeBannerProps {
   loading?: boolean;
@@ -13,13 +14,16 @@ interface WelcomeBannerProps {
 
 const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   loading, today, teacherName, roomSection, department, onStartBroadcast,
-}) => (
+}) => {
+  const { isDark } = useTheme();
+  return (
   <div style={{
     borderRadius: Radius.xl,
-    background: "linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0E8DB8 100%)",
+    background: "linear-gradient(135deg, #1E293B 0%, #1E293B 60%, #0E8DB8 100%)",
     padding: "28px 32px",
     display: "flex", alignItems: "center", justifyContent: "space-between",
     boxShadow: Shadow.lg, position: "relative", overflow: "hidden",
+    border: isDark ? "1px solid rgba(255,255,255,0.10)" : "none",
   }}>
     <div style={{ position: "absolute", right: 80, top: -30, width: 160, height: 160, borderRadius: "50%", background: "rgba(26,173,220,0.12)" }} />
     <div style={{ position: "absolute", right: -20, bottom: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(13,208,245,0.08)" }} />
@@ -38,7 +42,7 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
           `Good morning, ${teacherName} 👋`
         )}
       </div>
-      <div style={{ fontSize: FontSize.base, color: "rgba(255,255,255,0.55)", marginTop: 6, minHeight: 22 }}>
+      <div style={{ fontSize: FontSize.base, color: "rgba(255,255,255,0.75)", marginTop: 6, minHeight: 22 }}>
         {loading ? (
           <span style={{
             display: "inline-block", width: 120, height: 14, borderRadius: 4,
@@ -59,6 +63,7 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
       🎙 Start Broadcast
     </Button>
   </div>
-);
+  );
+};
 
 export default WelcomeBanner;

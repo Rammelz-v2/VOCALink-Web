@@ -15,7 +15,7 @@ const QuickActionsCard: React.FC<QuickActionsCardProps> = ({ onBroadcast, onLive
     <div style={{
       padding: "14px 16px", borderBottom: `1px solid ${C.gray2}`,
       fontSize: FontSize.md, fontWeight: 700, color: C.text,
-      background: "linear-gradient(to right, #FAFAFA, #F8FAFC)",
+      background: C.gray,
     }}>
       Quick Actions
     </div>

@@ -19,12 +19,25 @@ import { useAuth }    from "./context/AuthContext";
 import { SessionProvider, useSession } from "./context/SessionContext";
 import type { NavPage } from "./types";
 
+// Fade out the inline HTML splash once React has painted its first frame.
+function useSplashFade() {
+  React.useEffect(() => {
+    const el = document.getElementById("splash");
+    if (!el) return;
+    el.classList.add("fade-out");
+    const t = setTimeout(() => el.remove(), 460);
+    return () => clearTimeout(t);
+  }, []);
+}
+
 const DashboardInner: React.FC = () => {
   const [active, setActive] = useState<NavPage>("dashboard");
 
   const {
     joinToasts, leaveToasts, dismissJoinToast, dismissLeaveToast,
+    requestToasts, dismissRequestToast,
     profile, profileLoading, teacherPhoto, setTeacherPhoto, setProfile,
+    pendingRequests,
   } = useSession();
 
   const teacherName     = profile?.display_name || profile?.first_name || profile?.username || "";
@@ -58,18 +71,20 @@ const DashboardInner: React.FC = () => {
         profileLoading={profileLoading}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <Topbar page={active} />
+        <Topbar page={active} pendingCount={pendingRequests} onBellClick={() => setActive("dashboard")} />
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", display: "flex", flexDirection: "column", gap: 20, background: C.bg }}>
           {renderPage()}
         </main>
       </div>
 
-      {/* Global join/leave toasts — visible on every page, never reset on navigation */}
+      {/* Global toasts — visible on every page, never reset on navigation */}
       <JoinToastStack
         toasts={joinToasts}
         leaveToasts={leaveToasts}
+        requestToasts={requestToasts}
         onDismiss={dismissJoinToast}
         onDismissLeave={dismissLeaveToast}
+        onDismissRequest={dismissRequestToast}
       />
     </div>
   );
@@ -83,6 +98,7 @@ const DashboardLayout: React.FC = () => (
 
 const App: React.FC = () => {
   const { user } = useAuth();
+  useSplashFade();
 
   return (
     <Routes>

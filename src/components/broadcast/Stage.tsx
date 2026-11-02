@@ -11,6 +11,7 @@ interface StageProps {
   sessionLoading: boolean;
   sessionActive: boolean;
   studentActivity: StudentActivity[];
+  activityLoading: boolean;
   feedRef: React.RefObject<HTMLDivElement | null>;
   onFeedScroll: () => void;
   recording: boolean;
@@ -24,7 +25,7 @@ interface StageProps {
 /** The "room" — student responses (or an empty state), top-right controls,
  *  error snackbar, and the teacher's live caption overlay. */
 const Stage: React.FC<StageProps> = ({
-  sessionLoading, sessionActive, studentActivity, feedRef, onFeedScroll,
+  sessionLoading, sessionActive, studentActivity, activityLoading, feedRef, onFeedScroll,
   recording, isFullscreen, onToggleFullscreen,
   error, onDismissError, lastText,
 }) => (
@@ -33,7 +34,7 @@ const Stage: React.FC<StageProps> = ({
     borderRadius: 16,
     background: `radial-gradient(ellipse at 50% 45%, ${D.glow} 0%, ${D.stage} 70%)`,
   }}>
-    {sessionLoading ? null : !sessionActive ? (
+    {sessionLoading || activityLoading ? null : !sessionActive ? (
       <StageEmptyState
         heading="Start a session to see student responses"
         sub="Students respond with AAC icons. Their taps show up here as they happen."

@@ -24,7 +24,7 @@ const RecentSessionsCard: React.FC<RecentSessionsCardProps> = ({ sessions, onVie
     <div style={{
       padding: "14px 16px", borderBottom: `1px solid ${C.gray2}`,
       fontSize: FontSize.md, fontWeight: 700, color: C.text,
-      background: "linear-gradient(to right, #FAFAFA, #F8FAFC)",
+      background: C.gray,
       display: "flex", justifyContent: "space-between", alignItems: "center",
     }}>
       <span>Recent Sessions</span>

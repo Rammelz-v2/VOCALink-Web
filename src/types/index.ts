@@ -1,3 +1,11 @@
+export interface StudentActivity {
+  id:           string;
+  type:         "icon";
+  time:         string;
+  student_name: string;
+  text:         string;
+}
+
 export interface SessionParticipant {
   id:        number;
   user_id:   number;
