@@ -3,19 +3,35 @@ import React, { useEffect } from "react";
 const AUTO_DISMISS_MS = 6000;
 
 const REQUEST_LABELS: Record<string, { emoji: string; label: string }> = {
-  medication: { emoji: "💊", label: "Needs medication" },
-  bathroom:   { emoji: "🚿", label: "Bathroom break"  },
-  assistance: { emoji: "🙋", label: "Needs assistance" },
+  // Known emergency / medical types
+  medication: { emoji: "💊", label: "Needs medication"  },
+  bathroom:   { emoji: "🚻", label: "Needs the bathroom" },
+  assistance: { emoji: "🙋", label: "Needs assistance"  },
+  // Classroom request types (one per icon)
+  help:       { emoji: "✋", label: "Needs help"             },
+  water:      { emoji: "💧", label: "Wants water"            },
+  food:       { emoji: "🍎", label: "Wants food"             },
+  pencil:     { emoji: "✏️", label: "Needs a pencil"         },
+  tissue:     { emoji: "🤧", label: "Needs a tissue"         },
+  break:      { emoji: "⏸️", label: "Wants a break"         },
+  rest:       { emoji: "😴", label: "Needs to rest"          },
+  cold:       { emoji: "🥶", label: "Feeling cold"           },
+  hot:        { emoji: "🥵", label: "Feeling too hot"        },
+  too_loud:   { emoji: "🔇", label: "It's too loud"          },
+  chair:      { emoji: "🪑", label: "Needs to fix their seat"},
+  outside:    { emoji: "🌳", label: "Wants to go outside"   },
+  bag:        { emoji: "🎒", label: "Needs their bag"        },
 };
 
 interface RequestToastProps {
-  toast: { id: number; student_name: string; request_type: string };
+  toast: { id: number; student_name: string; request_type: string; note?: string | null };
   onDismiss: () => void;
 }
 
 const RequestToast: React.FC<RequestToastProps> = ({ toast, onDismiss }) => {
   const accent = "#F59E0B";
   const { emoji, label } = REQUEST_LABELS[toast.request_type] ?? { emoji: "📢", label: toast.request_type };
+  const displayLabel = toast.note || label;
   const initials = toast.student_name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
   useEffect(() => {
@@ -70,7 +86,7 @@ const RequestToast: React.FC<RequestToastProps> = ({ toast, onDismiss }) => {
             {toast.student_name}
           </div>
           <div style={{ fontSize: 12, color: accent, fontWeight: 500, marginTop: 1 }}>
-            {emoji} {label}
+            {emoji} {displayLabel}
           </div>
         </div>
         <button

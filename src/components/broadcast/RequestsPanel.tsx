@@ -15,6 +15,20 @@ const LABELS: Record<string, string> = {
   bathroom:   "Needs the bathroom",
   assistance: "Needs assistance",
   emergency:  "EMERGENCY",
+  // Classroom request types
+  help:       "Needs help",
+  water:      "Wants water",
+  food:       "Wants food",
+  pencil:     "Needs a pencil",
+  tissue:     "Needs a tissue",
+  break:      "Wants a break",
+  rest:       "Needs to rest",
+  cold:       "Feeling cold",
+  hot:        "Feeling too hot",
+  too_loud:   "It's too loud",
+  chair:      "Needs to fix their seat",
+  outside:    "Wants to go outside",
+  bag:        "Needs their bag",
 };
 
 const RequestsPanel: React.FC<RequestsPanelProps> = ({
@@ -73,11 +87,8 @@ const RequestsPanel: React.FC<RequestsPanelProps> = ({
             color: isEmergency && r.status === "pending" ? "#FF8A80" : undefined,
             letterSpacing: isEmergency ? "0.4px" : undefined,
           }}>
-            {LABELS[r.request_type] || r.request_type}
+            {r.note || LABELS[r.request_type] || r.request_type}
           </div>
-          {r.note && (
-            <div style={{ fontSize: 13, color: D.dim }}>{r.note}</div>
-          )}
           <div style={{ fontSize: 12, color: D.dim }}>
             {r.status === "pending" ? "Waiting" : "Acknowledged"}
           </div>

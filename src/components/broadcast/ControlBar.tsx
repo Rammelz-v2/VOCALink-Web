@@ -23,6 +23,7 @@ interface ControlBarProps {
   participantsPanelOpen: boolean;
   onToggleParticipantsPanel: () => void;
   participantCount: number;
+  micLevel: number;
 }
 
 /** Bottom bar: session code (left) · mic + start/end (center) · panel toggle (right). */
@@ -31,6 +32,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleMic, togglingSession, onToggleSession, panelOpen, onTogglePanel,
   requestsPanelOpen, onToggleRequestsPanel, requestCount,
   participantsPanelOpen, onToggleParticipantsPanel, participantCount,
+  micLevel,
 }) => (
   <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, paddingTop: 12 }}>
 
@@ -68,6 +70,21 @@ const ControlBar: React.FC<ControlBarProps> = ({
         >
           <Icon name={recording ? "mic" : "mic-off"} size={22} color={micOff ? D.muteFg : D.text} />
         </button>
+      </div>
+
+      {/* Volume bars — 4 bars animate with microphone level */}
+      <div
+        title={recording ? `Volume: ${Math.round(micLevel * 100)}%` : "Mic off"}
+        style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 20, padding: "0 2px", opacity: recording ? 1 : 0.25, transition: "opacity 0.3s" }}
+      >
+        {([0.15, 0.4, 0.65, 0.88] as const).map((threshold, i) => (
+          <div key={i} style={{
+            width: 3, borderRadius: 2,
+            height: `${7 + i * 4}px`,
+            background: micLevel >= threshold ? "#22C55E" : "rgba(255,255,255,0.18)",
+            transition: "background 0.08s",
+          }} />
+        ))}
       </div>
 
       {sessionLoading ? (

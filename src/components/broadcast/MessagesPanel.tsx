@@ -2,6 +2,17 @@ import React from "react";
 import { D, PATH, Glyph, btnBase } from "./theme";
 import IconButton from "./IconButton";
 
+const QUICK_PHRASES = [
+  "Listen carefully.",
+  "Good job!",
+  "Quiet please.",
+  "Eyes on me.",
+  "Raise your hand.",
+  "Please wait.",
+  "Open your books.",
+  "Well done!",
+];
+
 interface MessagesPanelProps {
   onClose: () => void;
   chatRef: React.RefObject<HTMLDivElement | null>;
@@ -9,11 +20,12 @@ interface MessagesPanelProps {
   manualText: string;
   setManualText: (v: string) => void;
   onSend: () => void;
+  onQuickSend: (text: string) => void;
   sessionActive: boolean;
 }
 
 const MessagesPanel: React.FC<MessagesPanelProps> = ({
-  onClose, chatRef, sentLines, manualText, setManualText, onSend, sessionActive,
+  onClose, chatRef, sentLines, manualText, setManualText, onSend, onQuickSend, sessionActive,
 }) => (
   <aside style={{
     width: 340, maxWidth: "45%", flexShrink: 0, display: "flex", flexDirection: "column",
@@ -49,10 +61,34 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
       ))}
     </div>
 
+    {/* Quick-phrase chips */}
+    <div style={{
+      display: "flex", gap: 6, overflowX: "auto", padding: "0 12px 8px",
+      scrollbarWidth: "none",
+    }}>
+      {QUICK_PHRASES.map(p => (
+        <button
+          key={p}
+          onClick={() => onQuickSend(p)}
+          disabled={!sessionActive}
+          title={p}
+          style={{
+            flexShrink: 0, padding: "5px 12px", borderRadius: 20,
+            background: "rgba(0,174,239,0.12)", border: "1px solid rgba(0,174,239,0.22)",
+            color: D.text, fontSize: 12, fontWeight: 500, cursor: sessionActive ? "pointer" : "not-allowed",
+            opacity: sessionActive ? 1 : 0.4, whiteSpace: "nowrap",
+            fontFamily: "inherit", transition: "background 0.15s",
+          }}
+        >
+          {p}
+        </button>
+      ))}
+    </div>
+
     <div
       className="bc-field"
       style={{
-        display: "flex", alignItems: "center", gap: 4, margin: 12,
+        display: "flex", alignItems: "center", gap: 4, margin: "0 12px 12px",
         padding: "4px 4px 4px 16px", borderRadius: 24, background: D.field,
         opacity: sessionActive ? 1 : 0.5,
       }}

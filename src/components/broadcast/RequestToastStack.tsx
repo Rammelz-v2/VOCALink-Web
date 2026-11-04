@@ -3,9 +3,24 @@ import { btnBase } from "./theme";
 import type { CommRequest } from "../../hooks/useBroadcastSession";
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-  medication: { label: "Needs medication",   color: "#F59E0B", icon: "💊" },
-  bathroom:   { label: "Needs the bathroom", color: "#3B82F6", icon: "🚻" },
-  assistance: { label: "Needs assistance",   color: "#A78BFA", icon: "🙋" },
+  // Known emergency / medical types
+  medication: { label: "Needs medication",      color: "#F59E0B", icon: "💊" },
+  bathroom:   { label: "Needs the bathroom",    color: "#3B82F6", icon: "🚻" },
+  assistance: { label: "Needs assistance",      color: "#A78BFA", icon: "🙋" },
+  // Classroom request types (one per icon)
+  help:       { label: "Needs help",            color: "#F59E0B", icon: "✋" },
+  water:      { label: "Wants water",           color: "#0EA5E9", icon: "💧" },
+  food:       { label: "Wants food",            color: "#22C55E", icon: "🍎" },
+  pencil:     { label: "Needs a pencil",        color: "#8B5CF6", icon: "✏️" },
+  tissue:     { label: "Needs a tissue",        color: "#94A3B8", icon: "🤧" },
+  break:      { label: "Wants a break",         color: "#EC4899", icon: "⏸️" },
+  rest:       { label: "Needs to rest",         color: "#6366F1", icon: "😴" },
+  cold:       { label: "Feeling cold",          color: "#38BDF8", icon: "🥶" },
+  hot:        { label: "Feeling too hot",       color: "#EF4444", icon: "🥵" },
+  too_loud:   { label: "It's too loud",         color: "#F59E0B", icon: "🔇" },
+  chair:      { label: "Needs to fix their seat", color: "#8B5CF6", icon: "🪑" },
+  outside:    { label: "Wants to go outside",   color: "#22C55E", icon: "🌳" },
+  bag:        { label: "Needs their bag",       color: "#F97316", icon: "🎒" },
 };
 
 const AUTO_DISMISS_MS = 9000;
@@ -96,11 +111,8 @@ const Toast: React.FC<ToastProps> = ({ request: r, onAcknowledge, onDismiss }) =
             {r.student_name}
           </div>
           <div style={{ fontSize: 13, color: cfg.color, fontWeight: 500, marginTop: 2 }}>
-            {cfg.label}
+            {r.note || cfg.label}
           </div>
-          {r.note && (
-            <div style={{ fontSize: 12, color: "#8A9099", marginTop: 3 }}>{r.note}</div>
-          )}
         </div>
 
         {/* Dismiss × */}

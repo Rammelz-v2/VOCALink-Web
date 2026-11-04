@@ -21,6 +21,7 @@ const Broadcast: React.FC = () => {
         padding: 12, boxSizing: "border-box",
         background: D.page, color: D.text,
         borderRadius: bc.isFullscreen ? 0 : 20,
+        overscrollBehaviorX: "none",
       }}
     >
       <style>{CSS}</style>
@@ -49,6 +50,7 @@ const Broadcast: React.FC = () => {
             manualText={bc.manualText}
             setManualText={bc.setManualText}
             onSend={bc.handleManualSend}
+            onQuickSend={bc.handleQuickSend}
             sessionActive={bc.sessionActive}
           />
         )}
@@ -79,6 +81,7 @@ const Broadcast: React.FC = () => {
         showHint={bc.showHint}
         onDismissHint={() => bc.setHintDismissed(true)}
         onToggleMic={bc.recording ? bc.stopRecording : bc.startRecording}
+        micLevel={bc.micLevel}
         togglingSession={bc.togglingSession}
         onToggleSession={bc.toggleSession}
         panelOpen={bc.panelOpen}

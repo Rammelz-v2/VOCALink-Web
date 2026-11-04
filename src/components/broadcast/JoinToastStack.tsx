@@ -6,7 +6,7 @@ import RequestToast from "./RequestToast";
 interface JoinToastStackProps {
   toasts: SessionParticipant[];
   leaveToasts?: SessionParticipant[];
-  requestToasts?: { id: number; student_name: string; request_type: string }[];
+  requestToasts?: { id: number; student_name: string; request_type: string; note?: string | null }[];
   onDismiss: (id: number) => void;
   onDismissLeave?: (id: number) => void;
   onDismissRequest?: (id: number) => void;

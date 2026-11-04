@@ -14,7 +14,7 @@ interface SessionContextValue {
   pendingRequests:    number;
   joinToasts:         SessionParticipant[];
   leaveToasts:        SessionParticipant[];
-  requestToasts:      { id: number; student_name: string; request_type: string }[];
+  requestToasts:      { id: number; student_name: string; request_type: string; note?: string | null }[];
   dismissRequestToast:(id: number) => void;
   profile:            any | null;
   profileLoading:     boolean;
@@ -55,7 +55,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [sessions,         setSessions]         = useState<SessionMeta[]>([]);
   const [sessionsLoading,  setSessionsLoading]  = useState(true);
   const [pendingRequests,  setPendingRequests]  = useState(0);
-  const [requestToasts,    setRequestToasts]    = useState<{ id: number; student_name: string; request_type: string }[]>([]);
+  const [requestToasts,    setRequestToasts]    = useState<{ id: number; student_name: string; request_type: string; note?: string | null }[]>([]);
   const [studentActivity,  setStudentActivity]  = useState<StudentActivity[]>([]);
   const [activityLoading,  setActivityLoading]  = useState(false);
   const [sentLines,        setSentLines]        = useState<string[]>([]);
@@ -118,6 +118,7 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
               id: r.id,
               student_name: r.student_name,
               request_type: r.request_type,
+              note: r.note ?? null,
             })),
           ]);
         }
